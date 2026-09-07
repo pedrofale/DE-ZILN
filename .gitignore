@@ -2,3 +2,18 @@
 .Rproj.user
 __pycache__
 .DS_Store
+
+# Downloaded / generated data — keep out of git
+notebooks/scrnaseq_reanalyses/data/
+notebooks/scrnaseq_reanalyses/cache/
+notebooks/scrnaseq_reanalyses/output/
+reproducibility/data/
+reproducibility/celltype/data/
+*.h5ad
+*.gmt
+
+# Packaging artifacts
+build/
+dist/
+*.egg-info/
+.pytest_cache/
