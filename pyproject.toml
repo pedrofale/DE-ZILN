@@ -31,14 +31,9 @@ Source = "https://github.com/pedrofale/lntest"
 anndata = ["anndata>=0.9", "pandas>=1.5", "statsmodels>=0.13"]
 test = ["lntest[anndata]", "pytest>=7"]
 
-# pkg/ is mapped to the `lntest` import name in place. It is deliberately not
-# moved: reproducibility/clustering/run_clustering_de.py, reproducibility/de_utils.py
-# and notebooks/scrnaseq_reanalyses/scrnaseq_resolutions_analysis.py all load
-# pkg/scanpy_wrapper.py by file path via importlib.util.spec_from_file_location,
-# and hosein_dev branches from the same layout.
 [tool.setuptools]
 packages = ["lntest"]
-package-dir = { "lntest" = "pkg" }
+package-dir = { "" = "src" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
