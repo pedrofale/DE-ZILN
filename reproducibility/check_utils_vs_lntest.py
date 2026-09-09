@@ -28,8 +28,10 @@ Oskar. Do not soften, round, or average a difference away to get past this.
 Exit codes
 ----------
 ``0`` both gates pass. ``2`` an arm was not measured, or was measured only in
-part, so no verdict is available for it. ``3`` the hard gate failed. ``4`` a
-headline number moved -- stop, and take it to Oskar. Nonzero is the normal
+part, so no verdict is available for it -- this includes any arm standing on an
+argument rather than a measurement. ``3`` the hard gate failed. ``4`` a headline
+number moved -- stop, and take it to Oskar. ``5`` an API assertion failed, so
+the surface stage 3b rewires is not the one measured here. Nonzero is the normal
 outcome of an incomplete run; it is never a reason to relax a gate.
 
 Usage
@@ -126,11 +128,20 @@ class Arm:
 # It is the harness's own statement of scope and should be confirmed.
 ARMS = [
     Arm("A", "synthetic NB null (FPR vs dispersion)", "variance_vs_metric.py",
-        MEASURABLE, "get_LN_lfcs", "bonferroni", "fpr", 2,
-        note="Pure null: mu1 == mu2, so every gene is a true negative."),
+        MEASURABLE, "get_LN_lfcs", "bonferroni", "fpr", 4,
+        note="Pure null: mu1 == mu2, so every gene is a true negative. "
+             "headline_decimals is 4, not the 2 the figure's axis suggests: FPR "
+             "here is a count over 1500 genes, so its granularity is 1/1500 = "
+             "6.7e-04 and every observed value is below 0.005. At 2 dp every "
+             "entry rounds to 0.0 and `moved` could never fire, whatever the "
+             "estimators did. 4 dp resolves a single significance call."),
     Arm("B", "synthetic NB with planted DEGs", "large_scale_NB_DE_test.py",
-        MEASURABLE, "get_LN_lfcs", "bonferroni", "tpr,f1", 2,
-        note="60 runs (3 dispersions x 20 reps). Headline is the per-dispersion mean."),
+        MEASURABLE, "get_LN_lfcs", "bonferroni", "tpr,f1", 3,
+        note="60 runs (3 dispersions x 20 reps). Headline is the per-dispersion "
+             "mean, which is exactly the groupby cell large_scale_NB_latex_"
+             "tables.py emits with float_format='%.3f' -- so the gate is 3 dp, "
+             "matching the table, not the 2 this entry carried until the "
+             "precision was checked against the generator."),
     Arm("C", "CITE-seq memory CD4", "large_scale_CITE_seq_exp.py",
         MEASURABLE, "get_DELN_lfcs", "fdr_bh", "tpr,f1", 3,
         note="Estimator substitution, not an import rename: calls get_DELN_lfcs, "
@@ -140,13 +151,25 @@ ARMS = [
     Arm("D", "Visium HD kidney, UMI subsampling",
         "notebooks/test/vishd_test_parallel.py", COVERED_BY_ARGUMENT,
         "get_LN_lfcs", None, None, None,
-        note="Aliases get_LN_lfcs as get_DELN_lfcs -- the same function arms A "
-             "and B measure. Gated on a multi-gigabyte 10x download that has "
-             "not happened; no Visium HD data is present in the tree."),
+        note="Aliases get_LN_lfcs as get_DELN_lfcs -- the same CODE PATH arms "
+             "A and B measure, in a REGIME THEY DO NOT REACH. A and B's zero "
+             "disagreements come from detection counts of ~980 and ~7818, "
+             "where the two trigammas agree to ~1e-3; this arm binomially "
+             "downsamples UMIs, so a_hat reaches 1-2, where the same table in "
+             "decision-retire-utils-py shows 22-44% relative error. Its "
+             "headline is an FPR curve, the quantity that moved on arm C. So "
+             "A and B cover the substitution's code path and not its effect, "
+             "and this arm counts as unmeasured until the download happens. "
+             "Note vishd_test_de_parallel.py carries the identical alias and "
+             "is not assigned a letter here."),
     Arm("E", "Visium HD kidney, spot subsampling",
         "notebooks/test/vishd_test_shape_split_shared.py", COVERED_BY_ARGUMENT,
         "get_LN_lfcs", None, None, None,
-        note="Same alias as arm D, same missing download."),
+        note="Same alias and same missing download as arm D. Reaches the "
+             "regime differently: shape_id aggregation makes each row a "
+             "pseudo-bulk, so entries are denser but n is the number of "
+             "capsules -- tens -- and small n also puts 1/a - 1/n far from "
+             "sum 1/j^2. Outside A and B's regime either way."),
     Arm("F", "lymph node subsampling",
         "reproducibility/run_subsampling_analysis_parallel.py", NOT_APPLICABLE,
         None, None, None, None,
@@ -851,10 +874,14 @@ def _arm_c(arm, lntest, reps=None):
     all-zero-gene guard that separate get_DELN_lfcs from get_LN_lfcs to be
     *shown* inert behind this arm's min_cells_per_group = 3 filter rather than
     assumed inert. So each replicate also runs utils' own get_LN_lfcs on the same
-    inputs: with the trigamma held fixed, the gap between the two frozen
-    functions is exactly the eps and the guard. It is reported as
-    deln_vs_ln_within_utils, next to a count of all-zero genes surviving the
-    filter, which is what makes the guard's branch reachable or not.
+    inputs, with the trigamma held fixed, reported as deln_vs_ln_within_utils
+    next to a count of all-zero genes surviving the filter.
+
+    That gap is NOT the eps and the guard, which is what this docstring claimed
+    until the numbers came in. Both are provably inert -- the filter guarantees
+    n_plus >= 3, so eps ** (1 + n_plus) <= 1e-36, and 0 all-zero genes survive,
+    so the guard branch is unreachable. The measured 1.03e-06 is the float32
+    intermediates get_LN_lfcs allocates and get_DELN_lfcs does not.
     """
     try:
         import anndata as ann
@@ -984,11 +1011,14 @@ def _arm_c(arm, lntest, reps=None):
             "max_abs_dlfc": max(within_dlfc) if within_dlfc else None,
             "max_abs_dp": max(within_dp) if within_dp else None,
             "detail": "utils.get_DELN_lfcs against utils.get_LN_lfcs on the same "
-                      "inputs, trigamma held fixed, so this is the eps = 1e-9 "
-                      "term and the missing all-zero-gene guard on their own. "
-                      "Zero here, with no all-zero genes surviving the filter, "
-                      "is what reduces arm C's substitution to the trigamma "
-                      "difference the other arms measure.",
+                      "inputs, trigamma held fixed. Measured 2026-09-09: "
+                      "max|dLFC| 1.03e-06, which is NOT the eps term -- with "
+                      "n_plus >= 3 guaranteed by the filter, eps ** (1+n_plus) "
+                      "is at most 1e-36, and 0 all-zero genes survive, so the "
+                      "guard is unreachable. It is the float32 intermediates "
+                      "utils.get_LN_lfcs allocates and get_DELN_lfcs does not. "
+                      "So arm C was already on the float64 path, and its "
+                      "comparison against lntest isolates the trigamma alone.",
         },
     }
     return _finish(units, dlfc_pool, headline, provenance, len(units) == replicates)
@@ -1042,7 +1072,14 @@ def _print_arm(arm, res):
               "not comparable to the manuscript.")
 
 
-def _verdict(gate_failures, moved, unmeasured):
+def _verdict(gate_failures, moved, unmeasured, api_failures=()):
+    if api_failures:
+        print(f"\nAPI ASSERTION FAILED: {'; '.join(api_failures)}. "
+              "These pin the surface stage 3b has to rewire. A failure here "
+              "means the refactor's import plan is wrong, so the arm numbers "
+              "below are measured against an API that is not the one being "
+              "adopted.")
+        return 5
     if gate_failures:
         print(f"\nHARD GATE FAILED on arms {', '.join(gate_failures)}: "
               f"max|dLFC| >= {HARD_DLFC_TOL:g}. The log-fold change involves no "
@@ -1112,10 +1149,16 @@ def main(argv=None):
         entry = asdict(arm)
         entry["result"] = None
         if arm.status != MEASURABLE:
-            # These two statuses are proofs and arguments, not gaps, and the
-            # decision record requires them to be recorded in these words.
+            # NOT_APPLICABLE is a proof of no-effect -- the arm never imports
+            # utils, so there is nothing to measure and nothing to report.
+            # COVERED_BY_ARGUMENT is not: it is an argument standing in for a
+            # measurement that has not happened, so it counts as unmeasured and
+            # the run must not exit 0. Collapsing the two is how arms D and E
+            # came to sit behind a "Both gates pass" line.
             print(f"[arm {arm.letter}] {arm.status}: {arm.name}")
             print(f"           {arm.note}")
+            if arm.status == COVERED_BY_ARGUMENT:
+                unmeasured.append(arm.letter)
         else:
             try:
                 entry["result"] = run_arm(arm, lntest, reps=args.reps)
@@ -1140,7 +1183,8 @@ def main(argv=None):
         args.json.write_text(json.dumps(report, indent=2))
         print(f"report written to {args.json}")
 
-    return _verdict(gate_failures, moved, unmeasured)
+    api_failures = [f["mismatch"] for f in report["api_mismatches"] if not f["ok"]]
+    return _verdict(gate_failures, moved, unmeasured, api_failures)
 
 if __name__ == "__main__":
     sys.exit(main())
