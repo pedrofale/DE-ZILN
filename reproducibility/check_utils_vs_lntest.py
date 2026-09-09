@@ -347,8 +347,23 @@ def check_baseline_rng_neutrality():
 
 
 def require_lntest():
+    """Return the installed package's estimator module.
+
+    ``lntest`` itself is the import that must succeed -- the whole point is to
+    measure against the *installed* package rather than against ``pkg/`` on a
+    path -- but ``pkg/__init__.py`` is empty, so the estimator is reachable only
+    as ``lntest.ln_test``. Everything downstream is given that submodule. Two
+    consequences worth naming rather than papering over:
+
+    * ``import lntest; lntest.get_LN_lfcs(...)`` does not work today. The
+      package has no top-level API at all, so a reader who installs it from PyPI
+      and follows the obvious call has to find ``lntest.ln_test`` first.
+    * it makes the get_DELN_lfcs assertion below mean something. Checked against
+      the empty top-level package it would pass for the wrong reason.
+    """
     try:
         import lntest
+        import lntest.ln_test as estimator
     except ImportError as exc:
         raise SystemExit(
             f"FATAL: cannot import lntest ({exc}).\n"
@@ -356,7 +371,7 @@ def require_lntest():
             "Install it with `pip install -e .` at the repo root, or activate "
             "the de-ziln-reproducibility conda env."
         )
-    return lntest
+    return estimator
 
 
 def check_api_mismatches(lntest):
@@ -371,9 +386,14 @@ def check_api_mismatches(lntest):
     # (1) return_log_abs_statistic has no counterpart in lntest, and its only
     #     callers must all be on the deletion list.
     callers = []
+    # The definition site, the frozen copy of it, and this file -- which matches
+    # its own detector string and would otherwise report itself as the one
+    # caller surviving the refactor.
+    not_callers = ("utils.py", "reproducibility/utils_frozen.py",
+                   pathlib.Path(__file__).resolve().relative_to(REPO_ROOT).as_posix())
     for path in sorted(REPO_ROOT.rglob("*.py")):
         rel = path.relative_to(REPO_ROOT).as_posix()
-        if rel in ("utils.py", "reproducibility/utils_frozen.py") or ".git/" in rel:
+        if rel in not_callers or ".git/" in rel:
             continue
         if "return_log_abs_statistic=True" in path.read_text():
             callers.append(rel)
