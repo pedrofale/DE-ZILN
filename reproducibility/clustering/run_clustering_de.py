@@ -33,17 +33,7 @@ import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 from rpy2.robjects.conversion import localconverter
 
-# Import scanpy_wrapper using the same pattern as the notebook
-def load_scanpy_wrapper():
-    """Load scanpy_wrapper module."""
-    import importlib.util
-    file_path = os.path.join(
-        os.path.dirname(__file__), '../../pkg/scanpy_wrapper.py'
-    )
-    spec = importlib.util.spec_from_file_location("scanpy_wrapper", file_path)
-    scanpy_wrapper = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(scanpy_wrapper)
-    return scanpy_wrapper
+from lntest.scanpy_wrapper import rank_genes_groups_ln
 
 
 def load_config(config_path):
@@ -417,9 +407,6 @@ def main():
         adata_full.layers['log1p_norm'] = tocsr_if_not_sparse(temp.X)
         del temp
 
-    # Load scanpy_wrapper
-    scanpy_wrapper = load_scanpy_wrapper()
-    
     # Run all DE tests once upfront for all resolutions (using ALL GENES! and transferred cluster assignments)
     print("Running differential expression tests for all resolutions (USE ALL GENES)...")
     for key_name in resolution_keys:
@@ -429,7 +416,7 @@ def main():
         # Run LN test (on norm_counts layer, all genes)
         ln_key = f"ln_{key_name}"
         print(f"    Running LN test for '{key_name}' ...")
-        scanpy_wrapper.rank_genes_groups_ln(adata_full, key_name, sparse=True, key_added=ln_key, layer="norm_counts")
+        rank_genes_groups_ln(adata_full, key_name, sparse=True, key_added=ln_key, layer="norm_counts")
         # Run Scanpy t-test (on log1p_norm layer, all genes)
         t_test_key = f"t_test_{key_name}"
         print(f"    Running Scanpy t-test for '{key_name}' ...")

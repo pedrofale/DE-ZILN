@@ -4,20 +4,7 @@ import statsmodels.stats.multitest as smm
 import pandas as pd
 import scipy.sparse as sp
 
-# Handle imports when loaded directly via importlib or as a package
-try:
-    from .ln_test import get_LN_lfcs, get_LN_lfcs_sparse
-except ImportError:
-    # Fallback for when loaded directly via importlib
-    import importlib.util
-    import os
-    pkg_dir = os.path.dirname(os.path.abspath(__file__))
-    ln_test_path = os.path.join(pkg_dir, 'ln_test.py')
-    spec = importlib.util.spec_from_file_location('ln_test', ln_test_path)
-    ln_test = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(ln_test)
-    get_LN_lfcs = ln_test.get_LN_lfcs
-    get_LN_lfcs_sparse = ln_test.get_LN_lfcs_sparse
+from .ln_test import get_LN_lfcs, get_LN_lfcs_sparse
 
 
 def _to_dense(a):

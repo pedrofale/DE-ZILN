@@ -5,12 +5,12 @@ Provides: layer preparation (counts, norm_counts, log1p_norm), LN test, t-test,
 wilcoxon, and MAST. Used by celltype, clustering, and subsampling scripts.
 """
 
-import os
-import importlib.util
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy.sparse as sp
+
+from lntest.scanpy_wrapper import rank_genes_groups_ln
 
 # Optional R/MAST
 try:
@@ -21,20 +21,6 @@ try:
     _HAS_RPY2 = True
 except ImportError:
     _HAS_RPY2 = False
-
-_scanpy_wrapper = None
-
-
-def _get_scanpy_wrapper():
-    """Load scanpy_wrapper from DE-ZILN/pkg (relative to this file)."""
-    global _scanpy_wrapper
-    if _scanpy_wrapper is None:
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(this_dir, "..", "pkg", "scanpy_wrapper.py")
-        spec = importlib.util.spec_from_file_location("scanpy_wrapper", file_path)
-        _scanpy_wrapper = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(_scanpy_wrapper)
-    return _scanpy_wrapper
 
 
 def tocsr_if_not_sparse(x):
@@ -76,11 +62,10 @@ def run_ln_de(
     **kwargs,
 ):
     """
-    Run LN test. Uses pkg/scanpy_wrapper.rank_genes_groups_ln.
+    Run LN test. Uses lntest.scanpy_wrapper.rank_genes_groups_ln.
     Default reference='rest' gives one-vs-rest; set groups and reference for two-group.
     """
-    sw = _get_scanpy_wrapper()
-    sw.rank_genes_groups_ln(
+    rank_genes_groups_ln(
         adata,
         groupby,
         key_added=key_added,
