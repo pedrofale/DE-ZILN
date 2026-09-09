@@ -9,8 +9,13 @@ notebooks/scrnaseq_reanalyses/cache/
 notebooks/scrnaseq_reanalyses/output/
 reproducibility/data/
 reproducibility/celltype/data/
+reproducibility/output/
 *.h5ad
 *.gmt
+
+# IDE and editor state
+.idea/
+.vscode/
 
 # Packaging artifacts
 build/
