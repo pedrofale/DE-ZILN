@@ -1,3 +1,20 @@
+"""SUPERSEDED, AND IT DOES NOT RUN.
+
+This is the predecessor of the clustering arm (``clustering/de.py`` and
+``clustering/metrics.py``). It is kept, not deleted, because it may have produced
+figures that reached a manuscript -- decision-repo-restructure describes it as
+writing "same-named but different-md5 PNGs" than the current arm, which means
+different results, not duplicated code, and Pedro's 2026-09-10 criterion deletes
+only what certainly did not contribute.
+
+It has been dead since the package move: line ~31 loads ``../../pkg/scanpy_wrapper.py``
+by file path, and ``pkg/`` became ``src/lntest/``. It also requires ``--config`` and
+ships no tracked YAML. Fixing either is out of scope -- it is preserved as a
+record of how those figures were made, not as a runnable entry point.
+
+Use ``clustering/de.py`` instead.
+"""
+
 #!/usr/bin/env python3
 """
 Script to analyze single-cell RNA-seq data across multiple Leiden resolutions.
