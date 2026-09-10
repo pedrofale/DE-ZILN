@@ -97,16 +97,69 @@ def trigamma_diff_int(
 
     return result
 
+# The two trigamma differences, and why both are here.
+#
+# TRIGAMMA_EXACT is psi_1(a) - psi_1(n), computed above. TRIGAMMA_RECOMB25 is the
+# integral approximation 1/a - 1/n that utils.py used, and it is the one every
+# published RECOMB number came from. They diverge where a is small -- 22% at
+# a = 2, 9.7% at a = 5, 1.1% at a = 50, 0.15% at a = 500 -- which is exactly the
+# sparse regime the method claims an advantage in.
+#
+# Which one is correct is a question for Oskar, open as question 1 in
+# handoff-math-questions. This module does not answer it. It makes the choice
+# explicit and selectable so that a reproducibility script can request the
+# published behaviour by name, instead of the repository carrying two divergent
+# copies of the estimator to get the same effect.
+#
+# The default is EXACT. Nothing silently reproduces the paper; a caller has to
+# ask for that, and the argument records at the call site that it did.
+
+TRIGAMMA_EXACT = "exact"
+TRIGAMMA_RECOMB25 = "recomb25"
+
+
+def trigamma_diff_recomb25(a, n):
+    """The 1/x approximation to psi_1 used for the RECOMB submission.
+
+    ``utils.trigamma(x) = 1 / x``, so the standard error's first term was
+    ``1/a_hat - 1/n``. Preserved verbatim, including that it does no rounding
+    or clamping -- matching the published behaviour matters more here than
+    matching this module's conventions.
+    """
+    return 1.0 / np.asarray(a, dtype=float) - 1.0 / float(n)
+
+
+def _trigamma_diff(a, n, method):
+    if method == TRIGAMMA_EXACT:
+        return trigamma_diff_int(a, n)
+    if method == TRIGAMMA_RECOMB25:
+        return trigamma_diff_recomb25(a, n)
+    raise ValueError(
+        f"unknown trigamma={method!r}; expected {TRIGAMMA_EXACT!r} "
+        f"(psi_1, the default) or {TRIGAMMA_RECOMB25!r} (1/x, the published "
+        f"RECOMB behaviour)"
+    )
+
+
 def digamma(x):
     return np.log(x) - 1 / (2 * x)
 
 # def trigamma(x):
 #         return 1 / x  + 0.5 / (x ** 2) +  1/(6.0*x**3)
 
-def log_beta_param_estimates(a, b):
+def log_beta_param_estimates(a, b, trigamma=TRIGAMMA_EXACT):
+    """Mean and variance of log Beta(a, b).
+
+    ``trigamma`` selects psi_1 (the default) or the 1/x approximation. It
+    matters here as much as it does in the estimator: at a=5, b=500 the two give
+    0.219339 and 0.198020, and the appendix figure beta_v_ln_visualization_5_500
+    was drawn with the second while its caption states the first. That is
+    question 2 in handoff-math-questions and is not decided here -- the argument
+    exists so the figure can be reproduced as published, and redrawn as
+    captioned, without editing this function.
+    """
     mu = digamma(a) - digamma(a + b)
-    #sigma_2 = trigamma(a) - trigamma(a + b)
-    sigma_2 = trigamma_diff_int(a,a + b)
+    sigma_2 = _trigamma_diff(a, a + b, trigamma)
     return mu, sigma_2
 
 
@@ -120,15 +173,16 @@ def intervals_ln(log_x, n, z=1.96):
     return antilog_interval, mu_bar, sigma_bar
 
 
-def intervals_beta(a, b, z=1.96):
-    mu_log_beta, var_log_beta = log_beta_param_estimates(a, b)
+def intervals_beta(a, b, z=1.96, trigamma=TRIGAMMA_EXACT):
+    mu_log_beta, var_log_beta = log_beta_param_estimates(a, b, trigamma=trigamma)
     se = np.sqrt(var_log_beta)
     log_intervals = mu_log_beta + var_log_beta / 2 + z * np.array([-se, se])
     antilog_interval = np.exp(log_intervals)
     return antilog_interval, mu_log_beta, var_log_beta
 
 
-def get_intervals(log_x, a, b, z=1.96, model='lognormal', eps=0.):
+def get_intervals(log_x, a, b, z=1.96, model='lognormal', eps=0.,
+                  trigamma=TRIGAMMA_EXACT):
     if model == 'naive':
         return interval_naive(log_x, b, z)
     n = log_x.size
@@ -139,7 +193,7 @@ def get_intervals(log_x, a, b, z=1.96, model='lognormal', eps=0.):
         # if there are only zero or one positive values, the mean estimate will be based on the log Beta mean
         mu_bar, sigma_bar = 0, 0
         squared_standard_error_ln = 0
-    _, mu_log_beta, var_log_beta = intervals_beta(a + eps ** n, b, z)
+    _, mu_log_beta, var_log_beta = intervals_beta(a + eps ** n, b, z, trigamma=trigamma)
 
     squared_standard_error_log_beta = var_log_beta
     se = np.sqrt(squared_standard_error_ln + squared_standard_error_log_beta)
@@ -186,7 +240,8 @@ def get_intervals_synthetic_data(true_mu, true_sigma_2, true_theta, experiments=
 
 
 def get_LN_lfcs(Y_, X_, normalize=True, test='t', normalization='CP10K',
-                return_standard_error=False, return_statistic=False):
+                return_standard_error=False, return_statistic=False,
+                return_log_abs_statistic=False, trigamma=TRIGAMMA_EXACT):
     """LN's t-test on two count matrices (cells x genes), dense or sparse.
 
     Delegates to :func:`get_LN_lfcs_sparse`, which accepts dense input and
@@ -204,6 +259,8 @@ def get_LN_lfcs(Y_, X_, normalize=True, test='t', normalization='CP10K',
         normalization=normalization,
         return_standard_error=return_standard_error,
         return_statistic=return_statistic,
+        return_log_abs_statistic=return_log_abs_statistic,
+        trigamma=trigamma,
     )
 
 
@@ -340,7 +397,9 @@ def get_LN_lfcs_sparse(
     normalization="CP10K",
     return_standard_error=False,
     return_statistic=False,
+    return_log_abs_statistic=False,
     eps=1e-12,
+    trigamma=TRIGAMMA_EXACT,
 ):
     """
     Sparse-friendly version of your LN LFC + test.
@@ -390,8 +449,8 @@ def get_LN_lfcs_sparse(
     log2_m_Y = np.log2(np.maximum(pos_mean_Y, eps))
     log2_m_X = np.log2(np.maximum(pos_mean_X, eps))
 
-    se_Y_1 = trigamma_diff_int(a_hat_Y, int(n))
-    se_X_1 = trigamma_diff_int(a_hat_X, int(n_prime))
+    se_Y_1 = _trigamma_diff(a_hat_Y, int(n), trigamma)
+    se_X_1 = _trigamma_diff(a_hat_X, int(n_prime), trigamma)
 
     mu_Y = log2_theta_hat_Y + log2_m_Y
     mu_X = log2_theta_hat_X + log2_m_X
@@ -417,11 +476,39 @@ def get_LN_lfcs_sparse(
     else:
         statistic, p_vals = compute_p_vals(mu_Y, mu_X, se_Y, se_X)
 
+    # The three return flags select what comes back after (lfc, p_vals) and are
+    # mutually exclusive. Until 2026-09-10 they were not: return_standard_error
+    # returned first and return_statistic was silently dropped if both were set,
+    # which decision-retire-utils-py records as a defect owing a guard. This is
+    # that guard. It raises rather than picking one, because a caller asking for
+    # two things and getting one is exactly the failure that went unnoticed.
+    _asked = [n for n, v in (("return_standard_error", return_standard_error),
+                             ("return_statistic", return_statistic),
+                             ("return_log_abs_statistic", return_log_abs_statistic)) if v]
+    if len(_asked) > 1:
+        raise ValueError(
+            "these return flags are mutually exclusive, and "
+            f"{', '.join(_asked)} were all set. Call once per quantity, or use "
+            "return_log_abs_statistic, which returns the statistic alongside "
+            "its log-magnitude."
+        )
+
     if return_standard_error:
         return lfc, p_vals, np.sqrt(se_X**2 + se_Y**2)
 
     if return_statistic:
         return lfc, p_vals, statistic
+
+    if return_log_abs_statistic:
+        # log|t| in log space: log|d| - 0.5*log(se^2). Identical to
+        # log(abs(statistic)) in exact arithmetic, but finite where the
+        # statistic itself overflows -- which is what GSEA ranking needs, since
+        # genes tied at inf carry no ordering.
+        se_combined_sq = se_Y**2 + se_X**2
+        tiny = np.finfo(float).tiny
+        log_abs = (np.log(np.abs(mu_Y - mu_X) + tiny)
+                   - 0.5 * np.log(se_combined_sq + tiny))
+        return lfc, p_vals, statistic, log_abs
 
     return lfc, p_vals
 

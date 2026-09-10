@@ -4,7 +4,7 @@ import statsmodels.stats.multitest as smm
 import pandas as pd
 import scipy.sparse as sp
 
-from .ln_test import get_LN_lfcs, get_LN_lfcs_sparse
+from .ln_test import TRIGAMMA_EXACT, get_LN_lfcs, get_LN_lfcs_sparse
 
 
 def _to_dense(a):
@@ -27,9 +27,24 @@ def rank_genes_groups_ln(
     test: str = "t",  # forwarded to get_LN_lfcs
     rankby_abs: bool = False,
     sparse: bool = True,
+    corr_method: str = "bonferroni",
+    trigamma: str = TRIGAMMA_EXACT,
 ):
     """
     Takes normalized data and performs LN's t-test. Updates the adata object with the results.
+
+    corr_method
+        Multiple-testing correction, passed to ``statsmodels.multipletests``.
+        Was hardcoded to ``"bonferroni"``; exposed so that an arm correcting a
+        different way (the CITE-seq arm uses ``"fdr_bh"``) can call this function
+        rather than reimplementing it. The name and default match scanpy's own
+        ``rank_genes_groups``.
+    trigamma
+        Which trigamma difference the standard error uses -- ``"exact"``
+        (psi_1, the default) or ``"recomb25"`` (the 1/x approximation every
+        published RECOMB number came from). See ``lntest.ln_test``. Exposed so
+        that a reproducibility script can request the published behaviour
+        through this function instead of bypassing it.
     """
 
     if groupby not in adata.obs:
@@ -82,6 +97,12 @@ def rank_genes_groups_ln(
     logfoldchanges = np.recarray((n_store,), dtype=dtype_float)
     pvals = np.recarray((n_store,), dtype=dtype_float)
     pvals_adj = np.recarray((n_store,), dtype=dtype_float)
+    # The standard error of the LFC. Stored so that a confidence interval is
+    # reachable through this function: lfc +/- 1.96 * lfc_se. That interval is
+    # the method's distinguishing claim -- main_rSEQ's issue B is that scanpy's
+    # LFC estimates fall outside their own CIs while LN's are centred in theirs
+    # -- and until now it could only be had by bypassing this wrapper.
+    lfc_se = np.recarray((n_store,), dtype=dtype_float)
 
     # Main loop
     obs_vals = adata.obs[groupby].values
@@ -106,21 +127,32 @@ def rank_genes_groups_ln(
                 X_,
                 test=test,
                 return_statistic=True,
+                trigamma=trigamma,
             )
         else:
             # This is slow: 0.1 seconds
             Y_ = _to_dense(Y_)
             X_ = _to_dense(X_)
             lfc_vec, p_vec, statistic_vec = get_LN_lfcs(
-            Y_,
-            X_,
-            test=test,
-            return_statistic=True,
-        )
+                Y_,
+                X_,
+                test=test,
+                return_statistic=True,
+                trigamma=trigamma,
+            )
         lfc_vec = np.asarray(lfc_vec, dtype=float)
         p_vec = np.asarray(p_vec, dtype=float)
         statistic_vec = np.asarray(statistic_vec, dtype=float)
-        q_vec = smm.multipletests(p_vec, alpha=0.05, method='bonferroni')[1]
+        # The standard error, without a second pass over the data.
+        # statistic = (mu_Y - mu_X) / sqrt(se_Y^2 + se_X^2) and lfc = mu_Y - mu_X,
+        # so sqrt(se_Y^2 + se_X^2) = lfc / statistic exactly. Calling the
+        # estimator again for it would double the cost of every arm.
+        with np.errstate(divide="ignore", invalid="ignore"):
+            se_vec = np.abs(lfc_vec / statistic_vec)
+        # lfc == 0 gives 0/0; the SE is finite there but unrecoverable this way,
+        # so it is left as NaN rather than guessed at.
+        se_vec[~np.isfinite(se_vec)] = np.nan
+        q_vec = smm.multipletests(p_vec, alpha=0.05, method=corr_method)[1]
 
         safe_p = np.clip(p_vec, 1e-300, 1.0)
         # score_vec = np.sign(lfc_vec) * (-np.log10(safe_p))
@@ -142,6 +174,7 @@ def rank_genes_groups_ln(
         logfoldchanges[g] = lfc_vec[top].astype(np.float32)
         pvals[g] = p_vec[top].astype(np.float32)
         pvals_adj[g] = q_vec[top].astype(np.float32)
+        lfc_se[g] = se_vec[top].astype(np.float32)
 
     # Write to adata.uns like scanpy
     adata.uns[key_added] = {
@@ -161,6 +194,7 @@ def rank_genes_groups_ln(
         "logfoldchanges": logfoldchanges,
         "pvals": pvals,
         "pvals_adj": pvals_adj,
+        "lfc_se": lfc_se,
     }
 
     return None

@@ -404,6 +404,11 @@ def require_lntest():
     return estimator
 
 
+def _signature_params(fn):
+    import inspect
+    return inspect.signature(fn).parameters
+
+
 def check_api_mismatches(lntest):
     """Assert the three API mismatches rather than trusting a grep.
 
@@ -413,48 +418,56 @@ def check_api_mismatches(lntest):
     """
     findings = []
 
-    # (1) return_log_abs_statistic has no counterpart in lntest, and its only
-    #     callers must all be on the deletion list.
-    callers = []
-    # The definition site, the frozen copy of it, and this file -- which matches
-    # its own detector string and would otherwise report itself as the one
-    # caller surviving the refactor.
-    not_callers = ("utils.py", "reproducibility/utils_frozen.py",
-                   pathlib.Path(__file__).resolve().relative_to(REPO_ROOT).as_posix())
-    for path in sorted(REPO_ROOT.rglob("*.py")):
-        rel = path.relative_to(REPO_ROOT).as_posix()
-        if rel in not_callers or ".git/" in rel:
-            continue
-        if "return_log_abs_statistic=True" in path.read_text():
-            callers.append(rel)
-    survivors = [c for c in callers if not any(c.startswith(d) for d in STAYS_ON_FROZEN)]
+    # (1) return_log_abs_statistic. This was "has no lntest counterpart, and every
+    #     caller must be on the deletion list". Both halves are now out of date:
+    #     the deletion list is void (the 3c re-judgement kept everything) and the
+    #     package gained the parameter on 2026-09-10. So the assertion inverts --
+    #     it now checks the counterpart EXISTS and returns the log of its own
+    #     statistic, which is the property the GSEA ranking depends on.
+    rng = np.random.default_rng(0)
+    tiny_Y = rng.integers(1, 20, size=(40, 12)).astype(float)
+    tiny_X = rng.integers(1, 20, size=(40, 12)).astype(float)
+    has_param = "return_log_abs_statistic" in _signature_params(lntest.get_LN_lfcs)
+    consistent = None
+    if has_param:
+        _lfc, _p, st, la = lntest.get_LN_lfcs(tiny_Y, tiny_X, test='t',
+                                              return_log_abs_statistic=True)
+        ok_mask = np.isfinite(st) & (np.abs(st) > 0)
+        consistent = float(np.max(np.abs(la[ok_mask] - np.log(np.abs(st[ok_mask])))))
     findings.append({
-        "mismatch": "return_log_abs_statistic has no lntest counterpart",
-        "callers": callers,
-        "callers_not_covered_by_utils_frozen": survivors,
-        "ok": not survivors,
-        "detail": "Nothing to translate: every caller stays on utils_frozen."
-                  if not survivors else
-                  "A caller reaches lntest and has no equivalent there.",
+        "mismatch": "return_log_abs_statistic has an lntest counterpart",
+        "present": has_param,
+        "max_abs_deviation_from_log_abs_statistic": consistent,
+        "ok": has_param and consistent is not None and consistent < 1e-12,
+        "detail": "lntest.get_LN_lfcs(return_log_abs_statistic=True) returns "
+                  "(lfc, p_vals, statistic, log_abs) -- note the order differs "
+                  "from utils, which returned (lfc, statistic, log_abs, p_vals). "
+                  "Callers translate rather than repoint."
+                  if has_param else
+                  "MISSING: lymphnode/gsea_utils.py and ln_de_vs_rest.py need it.",
     })
 
-    # (2) return_standard_error and return_statistic are mutually exclusive in
-    #     lntest: it returns on the first and never looks at the second, where
-    #     utils returned a five-tuple. A guard that raises is owed here; adding it
-    #     is a later stage, so this only records the current behaviour.
-    rng = np.random.default_rng(0)
-    tiny_Y = rng.integers(0, 20, size=(30, 8)).astype(float)
-    tiny_X = rng.integers(0, 20, size=(30, 8)).astype(float)
-    both = lntest.get_LN_lfcs(tiny_Y, tiny_X, return_standard_error=True,
-                              return_statistic=True)
+    # (2) The return flags are mutually exclusive. Until 2026-09-10 lntest
+    #     silently dropped the statistic when both were set, and this assertion
+    #     pinned that defect while decision-retire-utils-py recorded that a guard
+    #     was owed. The guard now exists, so the assertion checks it fires --
+    #     which is why this harness failed loudly the moment the API changed
+    #     underneath it, rather than passing on a stale premise.
+    try:
+        lntest.get_LN_lfcs(tiny_Y, tiny_X, return_standard_error=True,
+                           return_statistic=True)
+        raised = False
+    except ValueError:
+        raised = True
     findings.append({
-        "mismatch": "return_standard_error and return_statistic are mutually exclusive",
-        "returned_tuple_length": len(both),
-        "ok": len(both) == 3,
-        "detail": "lntest silently drops the statistic when both flags are set. "
-                  "A guard that raises is owed (decision-retire-utils-py, "
-                  "Consequences 2); it is not added here because stage 1b moves "
-                  "and changes nothing.",
+        "mismatch": "the return flags are mutually exclusive and say so",
+        "raises_when_combined": raised,
+        "ok": raised,
+        "detail": "A caller asking for two quantities now gets an error rather "
+                  "than one of them. decision-retire-utils-py, Consequences 2."
+                  if raised else
+                  "REGRESSION: the guard is gone; the statistic is being dropped "
+                  "silently again.",
     })
 
     # (3) get_DELN_lfcs has no counterpart at all -- this is what makes arm C a

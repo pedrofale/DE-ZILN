@@ -45,7 +45,13 @@ from tqdm import tqdm
 
 # Run from reproducibility/ as `python -m lymphnode.ln_de_vs_rest`, which puts that
 # directory on sys.path -- no path manipulation needed.
-from utils_frozen import get_LN_lfcs as get_DELN_lfcs
+# Migrated to the published package, 2026-09-10. lntest returns
+# (lfc, p_vals, statistic, log_abs) where utils returned
+# (lfc, statistic, log_abs, p_vals) -- the arity-and-order mismatch
+# decision-retire-utils-py predicted, so the unpacking is translated, not just
+# repointed. trigamma=TRIGAMMA_RECOMB25 keeps the published behaviour.
+from lntest.ln_test import TRIGAMMA_RECOMB25
+from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
 
 
 def compute_fraction_expressed(counts):
@@ -303,12 +309,13 @@ def run_de_celltype_vs_rest(adata, layer='counts', celltype_col='leiden',
         try:
             if use_log_abs_statistic:
                 # Return test statistics, log(|statistic|), AND p-values
-                lfcs, test_statistics, log_abs_statistics, p_vals = get_DELN_lfcs(
-                    Y_celltype, X_rest, 
-                    normalize=normalize, 
-                    normalization=normalization, 
+                lfcs, p_vals, test_statistics, log_abs_statistics = get_DELN_lfcs(
+                    Y_celltype, X_rest,
+                    normalize=normalize,
+                    normalization=normalization,
                     test=test,
-                    return_log_abs_statistic=True
+                    return_log_abs_statistic=True,
+                    trigamma=TRIGAMMA_RECOMB25
                 )
                 
                 # Multiple testing correction

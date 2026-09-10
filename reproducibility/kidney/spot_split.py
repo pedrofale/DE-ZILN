@@ -17,7 +17,12 @@ from sklearn.metrics import average_precision_score, precision_recall_curve, auc
 
 # Run from reproducibility/ as `python -m kidney.spot_split`, which puts that
 # directory on sys.path -- no path manipulation needed.
-from utils_frozen import get_LN_lfcs as get_DELN_lfcs
+# Reproducibility scripts request the PUBLISHED trigamma explicitly, so this
+# tree reproduces the paper by construction. lntest's own default is the exact
+# psi_1; which one is correct is question 1 in handoff-math-questions, open with
+# Oskar. When it is settled this is a one-word change here, not a migration.
+from lntest.ln_test import TRIGAMMA_RECOMB25
+from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
 from baselines import get_test_results, scanpy_sig_test
 
 
@@ -43,7 +48,7 @@ def fpr_test_single(X, Y):
         else:
             method_key = "Scanpy " + method
         if method == "DELN":
-            lfcs, DELN_p_vals = get_DELN_lfcs(Y, X, test='t')
+            lfcs, DELN_p_vals = get_DELN_lfcs(Y, X, test='t', trigamma=TRIGAMMA_RECOMB25)
             adj_pvals = smm.multipletests(DELN_p_vals, alpha=0.05, method='bonferroni')[1]
             if np.sum(adj_pvals >= 0.05) == n_genes:
                 results[method_key] = {"fpr": 0., "fpr_filtered": 0.}
@@ -99,7 +104,7 @@ def de_test_single(X, Y, selected_genes, true_signs):
         else:
             method_key = "Scanpy " + method
         if method == "DELN":
-            lfcs, DELN_p_vals = get_DELN_lfcs(Y, X, test='t')
+            lfcs, DELN_p_vals = get_DELN_lfcs(Y, X, test='t', trigamma=TRIGAMMA_RECOMB25)
             adj_pvals = smm.multipletests(DELN_p_vals, alpha=0.05, method='bonferroni')[1]
         else:
             lfcs, adj_pvals = scanpy_sig_test(X, Y, method=method)

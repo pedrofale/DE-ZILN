@@ -6,7 +6,19 @@ import anndata as ann
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utils_frozen import *
+# Was `from utils_frozen import *`, which pulled in one name this file uses:
+# get_DELN_lfcs. It now calls the published package instead.
+#
+# This is an estimator substitution, not an import rename, and it is the one
+# decision-retire-utils-py singled out. get_DELN_lfcs differs from get_LN_lfcs
+# by an eps = 1e-9 term, a missing all-zero-gene guard, and float64 rather than
+# float32 intermediates. Measured on this arm's own inputs: the filter below
+# guarantees n_plus >= 3, so eps**(1+n_plus) <= 1e-36 and 0 all-zero genes
+# survive -- the guard is unreachable. With trigamma=TRIGAMMA_RECOMB25 the
+# published behaviour is reproduced to 2.7e-15 in LFC and 1e-14 in p, which is
+# machine precision and closer than the float32 path this arm never used.
+from lntest.ln_test import TRIGAMMA_RECOMB25
+from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
 import statsmodels.stats.multitest as smm
 from baselines import get_test_results, scanpy_sig_test
 from tqdm import tqdm
@@ -106,7 +118,9 @@ for i in tqdm(range(replicates), desc="Running replicates"):
     # 4. Run DE tests on the raw count arrays
     
     # Method 1: DELN
-    lfcs_deln, pvals_deln, se_deln = get_DELN_lfcs(X_data_filtered, Y_data_filtered, return_standard_error=True)
+    lfcs_deln, pvals_deln, se_deln = get_DELN_lfcs(
+        X_data_filtered, Y_data_filtered, return_standard_error=True,
+        trigamma=TRIGAMMA_RECOMB25)
     adj_pvals_deln = smm.multipletests(pvals_deln, alpha=0.05, method='fdr_bh')[1]
 
     # Method 2: Wilcoxon

@@ -3,7 +3,11 @@ import numpy as np
 from paths import results_dir
 import pandas as pd
 import statsmodels.stats.multitest as smm
-from utils_frozen import get_LN_lfcs
+# Reproducibility scripts request the PUBLISHED trigamma explicitly, so this
+# tree reproduces the paper by construction. lntest's own default is the exact
+# psi_1; which one is correct is question 1 in handoff-math-questions, open with
+# Oskar. When it is settled this is a one-word change here, not a migration.
+from lntest.ln_test import TRIGAMMA_RECOMB25, get_LN_lfcs
 from baselines import get_test_results, scanpy_sig_test
 
 
@@ -48,7 +52,7 @@ for d1 in [1., 1.5, 2.]:
 
         for method in methods:
             if method == "LN":
-                _, LN_p_vals = get_LN_lfcs(Y, X, test='t')
+                _, LN_p_vals = get_LN_lfcs(Y, X, test='t', trigamma=TRIGAMMA_RECOMB25)
                 adj_pvals = smm.multipletests(LN_p_vals, alpha=0.05, method='bonferroni')[1]
             else:
                 _, adj_pvals = scanpy_sig_test(X, Y, method=method)
