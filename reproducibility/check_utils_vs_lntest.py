@@ -381,15 +381,14 @@ def require_lntest():
 
     ``lntest`` itself is the import that must succeed -- the whole point is to
     measure against the *installed* package rather than against ``pkg/`` on a
-    path -- but ``pkg/__init__.py`` is empty, so the estimator is reachable only
-    as ``lntest.ln_test``. Everything downstream is given that submodule. Two
-    consequences worth naming rather than papering over:
+    path. Everything downstream is given the ``lntest.ln_test`` submodule
+    specifically, which keeps the get_DELN_lfcs assertion below meaningful:
+    resolved against a package that re-exports names, it could pass for the
+    wrong reason.
 
-    * ``import lntest; lntest.get_LN_lfcs(...)`` does not work today. The
-      package has no top-level API at all, so a reader who installs it from PyPI
-      and follows the obvious call has to find ``lntest.ln_test`` first.
-    * it makes the get_DELN_lfcs assertion below mean something. Checked against
-      the empty top-level package it would pass for the wrong reason.
+    ``lntest.get_LN_lfcs`` and ``lntest.rank_genes_groups_ln`` do now exist as
+    top-level names (added 2026-09-10); an earlier version of this docstring
+    said they did not, which was true when ``__init__.py`` was empty.
     """
     try:
         import lntest

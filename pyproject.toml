@@ -20,6 +20,12 @@ classifiers = [
 dependencies = [
     "numpy>=1.23",
     "scipy>=1.9",
+    # For Benjamini-Hochberg, imported lazily inside the branch that uses it --
+    # the same arrangement scanpy has, which declares statsmodels>=0.14.5 and
+    # imports multipletests inside `_rank_genes_groups.py`. Correcting the same
+    # way scanpy does is worth more than shedding the dependency, and every
+    # scanpy user already has it.
+    "statsmodels>=0.13",
 ]
 
 [project.urls]
@@ -27,9 +33,12 @@ Homepage = "https://github.com/pedrofale/lntest"
 Source = "https://github.com/pedrofale/lntest"
 
 [project.optional-dependencies]
-# Needed only by lntest.scanpy_wrapper.rank_genes_groups_ln.
-anndata = ["anndata>=0.9", "pandas>=1.5", "statsmodels>=0.13"]
-test = ["lntest[anndata]", "pytest>=7"]
+# anndata and pandas are needed only to *build* the objects the wrapper is
+# called with. The wrapper is duck-typed and never imports either, so they are
+# test dependencies rather than runtime ones. scanpy is here so the corr_method
+# tests can check we stay interchangeable with scanpy's own correction.
+test = ["anndata>=0.9", "pandas>=1.5", "scanpy>=1.10", "pytest>=7"]
+anndata = []  # kept as an accepted-but-empty alias; the extra is no longer needed
 
 [tool.setuptools]
 packages = ["lntest"]

@@ -35,7 +35,7 @@ import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 from rpy2.robjects.conversion import localconverter
 
-from lntest.scanpy_wrapper import rank_genes_groups_ln
+from lntest import rank_genes_groups_ln
 
 
 def load_config(config_path):

@@ -1,11 +1,8 @@
 import numpy as np
 from typing import Optional
-import statsmodels.stats.multitest as smm
-import pandas as pd
 import scipy.sparse as sp
 
 from .ln_test import TRIGAMMA_EXACT, get_LN_lfcs, get_LN_lfcs_sparse
-
 
 def _to_dense(a):
     """Convert (possibly sparse) matrix to a dense numpy array."""
@@ -13,6 +10,36 @@ def _to_dense(a):
         return a.toarray()
     # anndata can sometimes give numpy matrix; force ndarray
     return np.asarray(a)
+
+
+# Multiple-testing correction follows scanpy's, deliberately.
+#
+# scanpy declares statsmodels>=0.14.5 as a hard dependency and, in
+# ``_rank_genes_groups.py``, corrects exactly this way: Benjamini-Hochberg via
+# ``multipletests(..., method="fdr_bh")`` imported lazily inside the branch,
+# Bonferroni as the closed form inline. Reimplementing that would buy nothing --
+# every scanpy user already has statsmodels -- and would risk drifting from the
+# numbers scanpy's own ``rank_genes_groups`` produces, which is the one thing
+# this wrapper must not do.
+#
+# The vocabulary is scanpy's too: ``avail_corr = {"benjamini-hochberg",
+# "bonferroni"}``, not statsmodels' ``fdr_bh`` spelling.
+CORR_METHODS = ("benjamini-hochberg", "bonferroni")
+
+
+def _adjust_pvalues(pvals, method, n_genes):
+    """Adjusted p-values, by the same route scanpy takes."""
+    if method == "benjamini-hochberg":
+        from statsmodels.stats.multitest import multipletests
+
+        pvals = np.asarray(pvals, dtype=float).copy()
+        # scanpy replaces NaN with 1 before correcting; an all-zero gene can
+        # produce one, and multipletests would otherwise propagate it.
+        pvals[np.isnan(pvals)] = 1
+        return multipletests(pvals, alpha=0.05, method="fdr_bh")[1]
+    if method == "bonferroni":
+        return np.minimum(np.asarray(pvals, dtype=float) * n_genes, 1.0)
+    raise ValueError(f"corr_method must be one of {set(CORR_METHODS)}.")
 
 
 def rank_genes_groups_ln(
@@ -34,7 +61,13 @@ def rank_genes_groups_ln(
     Takes normalized data and performs LN's t-test. Updates the adata object with the results.
 
     corr_method
-        Multiple-testing correction, passed to ``statsmodels.multipletests``.
+        Multiple-testing correction, using scanpy's vocabulary and scanpy's
+        implementation: ``"benjamini-hochberg"`` or ``"bonferroni"``.
+
+        The default differs from scanpy's on purpose. scanpy defaults to
+        Benjamini-Hochberg; this wrapper was hardcoded to Bonferroni before the
+        parameter existed, and every published number was produced that way, so
+        changing the default here would silently move results.
         Was hardcoded to ``"bonferroni"``; exposed so that an arm correcting a
         different way (the CITE-seq arm uses ``"fdr_bh"``) can call this function
         rather than reimplementing it. The name and default match scanpy's own
@@ -152,7 +185,7 @@ def rank_genes_groups_ln(
         # lfc == 0 gives 0/0; the SE is finite there but unrecoverable this way,
         # so it is left as NaN rather than guessed at.
         se_vec[~np.isfinite(se_vec)] = np.nan
-        q_vec = smm.multipletests(p_vec, alpha=0.05, method=corr_method)[1]
+        q_vec = _adjust_pvalues(p_vec, corr_method, n_vars)
 
         safe_p = np.clip(p_vec, 1e-300, 1.0)
         # score_vec = np.sign(lfc_vec) * (-np.log10(safe_p))

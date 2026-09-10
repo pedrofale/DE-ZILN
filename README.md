@@ -5,7 +5,7 @@ Differential expression testing on an asymptotically unbiased log-fold-change es
 The repository holds two things:
 
 - **`src/lntest/`** — the method, as an installable package. `ln_test.py` is the estimator; `scanpy_wrapper.py` exposes it as `rank_genes_groups_ln`, shaped like `scanpy.tl.rank_genes_groups`.
-- **`reproducibility/`** — every result in the papers that depends on code, one directory per experiment.
+- **`reproducibility/`** — every result in the Nature submission that depends on code, one directory per experiment.
 
 ## Install
 
@@ -13,17 +13,15 @@ The repository holds two things:
 pip install -e .
 ```
 
-`lntest` itself needs only `numpy` and `scipy`. The scanpy wrapper needs `anndata`, `pandas` and `statsmodels`:
+That is all that is needed. `lntest` depends on `numpy`, `scipy` and `statsmodels` — the last for Benjamini-Hochberg, imported lazily and only when you ask for it, which is the arrangement scanpy itself uses.
 
-```bash
-pip install -e ".[anndata]"
-```
+It does **not** depend on `anndata` or `scanpy`. `rank_genes_groups_ln` is duck-typed on the object you hand it, so it works with an `AnnData` without the package needing to import one.
 
 ## Use
 
 ```python
 import scanpy as sc
-from lntest.scanpy_wrapper import rank_genes_groups_ln
+from lntest import rank_genes_groups_ln
 
 rank_genes_groups_ln(adata, groupby="leiden", layer="norm_counts")
 adata.uns["rank_genes_groups"]["logfoldchanges"]
@@ -34,10 +32,13 @@ Takes **normalised, not log-transformed** counts. The interval is the method's d
 
 Two options are worth knowing about:
 
-- `corr_method=` — multiple-testing correction, default `"bonferroni"`, matching scanpy's own.
-- `trigamma=` — `"exact"` (ψ₁, the default) or `"recomb25"`, the `1/x` approximation every published RECOMB number was produced with. Which is correct is an open question; the reproducibility scripts request `"recomb25"` explicitly so that tree reproduces the papers by construction.
+- `corr_method=` — `"benjamini-hochberg"` or `"bonferroni"`, scanpy's own vocabulary and scanpy's
+  implementation. The default is `"bonferroni"` rather than scanpy's `"benjamini-hochberg"`, because
+  this function was hardcoded to Bonferroni before the parameter existed and every published number
+  was produced that way.
+- `trigamma=` — `"exact"` (ψ₁, the default) or `"recomb25"`, the `1/x` approximation every published RECOMB number was produced with. Which is correct is an open question; the reproducibility scripts request `"recomb25"` explicitly so that tree reproduces the submission by construction.
 
-## Reproducing the papers
+## Reproducing the Nature submission
 
 **See [`reproducibility/README.md`](reproducibility/README.md).** It is the only reproduction instruction that is maintained: the environment, the run convention, what each arm needs, and what is known not to work.
 
@@ -53,12 +54,6 @@ pytest
 ```
 
 Covers the package only. **`reproducibility/` has no test suite** — nothing there checks a change.
-
-## Where the RECOMB scripts went
-
-The submission's scripts were reorganised by experiment in 2026-09.
-Every move was recorded as a pure rename, so `git log --follow <path>` traces any of them back
-through the old name and `git log --diff-filter=R -M` lists the moves.
 
 ## Contributing
 

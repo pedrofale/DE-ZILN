@@ -10,7 +10,7 @@ import pandas as pd
 import scanpy as sc
 import scipy.sparse as sp
 
-from lntest.scanpy_wrapper import rank_genes_groups_ln
+from lntest import rank_genes_groups_ln
 
 # Optional R/MAST
 try:
@@ -62,7 +62,7 @@ def run_ln_de(
     **kwargs,
 ):
     """
-    Run LN test. Uses lntest.scanpy_wrapper.rank_genes_groups_ln.
+    Run LN test. Uses lntest.rank_genes_groups_ln.
     Default reference='rest' gives one-vs-rest; set groups and reference for two-group.
     """
     rank_genes_groups_ln(

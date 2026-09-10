@@ -1,7 +1,7 @@
 # Reproducing the results
 
-Everything in the paper that depends on code lives here, one directory per experiment.
-This file is the only reproduction instruction that exists; the top-level `README.md` describes the RECOMB-era layout and is kept for its history, not as a guide.
+Everything in the Nature submission that depends on code lives here, one directory per experiment.
+This file is the reproduction instruction; the top-level `README.md` covers the `lntest` package itself.
 
 Read [Known gaps](#known-gaps) before trusting any number you produce.
 
