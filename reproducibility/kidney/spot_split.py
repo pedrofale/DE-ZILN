@@ -910,7 +910,7 @@ if __name__ == '__main__':
                         help='Output file for results CSV (default: auto-generated from output name)')
     parser.add_argument('--input_file', type=str, 
                         default=str(data_dir(__file__) / 'merged_blobs_in_cluster_5.h5ad'),
-                        help='Input h5ad. Default is kidney/data/; the file is not in this repo -- ask Oskar')
+                        help='Input h5ad. Default is kidney/data/, where kidney/preprocess.ipynb writes it.')
     args = parser.parse_args()
     
     n_shape_ids_remove = args.n_shape_ids_remove
