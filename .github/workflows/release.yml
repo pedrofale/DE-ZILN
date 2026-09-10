@@ -148,7 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/lntest
+      url: https://pypi.org/p/ln-ttest
     permissions:
       id-token: write        # the OIDC token trusted publishing exchanges
     steps:

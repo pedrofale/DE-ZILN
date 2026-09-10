@@ -5,6 +5,12 @@ Differential expression testing on an asymptotically unbiased log-fold-change es
 ## Installation
 
 ```bash
+pip install ln-ttest
+```
+
+From a checkout:
+
+```bash
 pip install -e .
 ```
 

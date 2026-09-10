@@ -3,7 +3,12 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lntest"
+# The PyPI distribution name. It is NOT the import name, which stays `lntest`
+# (see [tool.setuptools] below). PyPI rejected `lntest` as "too similar to an
+# existing project" -- `intest` exists, and PyPI treats l/i/1 as confusable to
+# block typosquatting. So: pip install ln-ttest, then `from lntest import ...`,
+# the way scikit-learn installs and imports as sklearn.
+name = "ln-ttest"
 version = "0.1.0"
 description = "LN's t-test: differential expression testing on an asymptotically unbiased log-fold-change estimator"
 readme = "README.md"
