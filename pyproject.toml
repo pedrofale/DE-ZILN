@@ -8,6 +8,13 @@ version = "0.1.0"
 description = "LN's t-test: differential expression testing on an asymptotically unbiased log-fold-change estimator"
 readme = "README.md"
 requires-python = ">=3.9"
+authors = [
+    { name = "Oskar Kviman" },
+    { name = "Pedro F. Ferreira" },
+]
+maintainers = [
+    { name = "Pedro F. Ferreira", email = "pedro.miguel.ferreira.pf@gmail.com" },
+]
 license = { file = "LICENSE" }
 keywords = ["single-cell", "differential-expression", "transcriptomics", "scanpy"]
 classifiers = [
@@ -29,8 +36,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pedrofale/lntest"
-Source = "https://github.com/pedrofale/lntest"
+# The shared repository, not the fork this happens to be developed on. Oskar
+# intends to rename it from DE-ZILN to lntest; GitHub keeps a permanent redirect
+# for a renamed repository, so this URL survives the change and should be left
+# alone until the rename actually happens.
+Homepage = "https://github.com/okviman/DE-ZILN"
+Source = "https://github.com/okviman/DE-ZILN"
 
 [project.optional-dependencies]
 # anndata and pandas are needed only to *build* the objects the wrapper is
