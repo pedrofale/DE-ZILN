@@ -18,6 +18,8 @@ import sys
 import yaml
 import numpy as np
 import pandas as pd
+
+from paths import require_input
 import scanpy as sc
 
 # Run from reproducibility/ as `python -m clustering.metrics`, which puts that
@@ -83,7 +85,11 @@ def main():
     }
 
     print(f"Loading AnnData from {adata_path} ...")
-    adata = sc.read_h5ad(adata_path)
+    adata = sc.read_h5ad(require_input(
+        adata_path,
+        what="the DE-annotated AnnData this arm scores",
+        source="run `python -m clustering.de` first",
+    ))
 
     # ----------- Metrics computations start here ------------
 

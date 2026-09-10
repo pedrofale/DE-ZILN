@@ -5,9 +5,17 @@ library(tidyverse)
 library(Seurat)
 
 library(Seurat)
+
+# Paths are relative to this script's directory (citeseq/R/), which is what
+# ZILN.Rproj sets as the R working directory. The arm's committed input lives in
+# citeseq/data/; everything this chain produces goes to citeseq/results/.
+data_dir <- "../data/"
+results_dir <- "../results/"
+dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
+
 MIN_CELLS <- 3
 seurat <- Read10X_h5("sc5p_v2_hs_PBMC_10k_filtered_feature_bc_matrix.h5")
-output_path <- "10X_PBMC_10K/"
+output_path <- results_dir
 if (!dir.exists(output_path)) {
   dir.create(output_path, recursive = T)
 }
@@ -69,7 +77,7 @@ pl <- ggplot(adt_clr_transformed_dt, aes(CD3, fill=CD3_cluster)) +
   ylab("Density") +
   ggtitle("CD3 CLR distribution with GMM clustering") + 
   labs(fill = "CD3")
-ggsave("10X_PBMC_10K/CD3_density_plot.pdf", plot = pl)
+ggsave(paste0(results_dir, "CD3_density_plot.pdf"), plot = pl)
 
 pl <- ggplot(adt_clr_transformed_dt, aes(CD4, fill=CD4_cluster)) + 
   geom_density() +
@@ -77,7 +85,7 @@ pl <- ggplot(adt_clr_transformed_dt, aes(CD4, fill=CD4_cluster)) +
   ylab("Density") +
   ggtitle("CD4 CLR distribution with GMM clustering") + 
   labs(fill = "CD4")
-ggsave("10X_PBMC_10K/CD4_density_plot.pdf", plot = pl)
+ggsave(paste0(results_dir, "CD4_density_plot.pdf"), plot = pl)
 
 # Take a subset of CD3+ and CD4++ cells and identify CD45RA- cells.
 adt_clr_transformed_dt %>% 
@@ -89,7 +97,7 @@ adt_clr_transformed_dt %>%
   ggtitle("CD45RA CLR distribution with GMM clustering") + 
   labs(fill = "CD45RA") -> pl
 pl
-ggsave("10X_PBMC_10K/CD45RA_density_plot.pdf", plot = pl)
+ggsave(paste0(results_dir, "CD45RA_density_plot.pdf"), plot = pl)
 
 adt_clr_transformed_dt %>% 
   filter(CD3_cluster == "+" & CD4_cluster == "++" & CD45RA_cluster == "-") %>% 
@@ -97,8 +105,8 @@ adt_clr_transformed_dt %>%
 
 pbmc10k_cd4_memory <- subset(pbmc10k, cells = cd4_memory_cells$barcode)
 dim(pbmc10k_cd4_memory)
-saveRDS(pbmc10k_cd4_memory, file = "10X_PBMC_10K/pbmc10k_cd4_memory.rds")
+saveRDS(pbmc10k_cd4_memory, file = paste0(results_dir, "pbmc10k_cd4_memory.rds"))
 
 # Save all of the data.
-saveRDS(pbmc10k, file = "10X_PBMC_10K/pbmc10k.rds")
+saveRDS(pbmc10k, file = paste0(results_dir, "pbmc10k.rds"))
 

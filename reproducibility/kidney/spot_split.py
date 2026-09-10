@@ -10,6 +10,8 @@ from functools import partial
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import pandas as pd
+
+from paths import data_dir, require_input
 import json
 from sklearn.metrics import average_precision_score, precision_recall_curve, auc
 
@@ -902,8 +904,8 @@ if __name__ == '__main__':
     parser.add_argument('--results_file', type=str, default=None,
                         help='Output file for results CSV (default: auto-generated from output name)')
     parser.add_argument('--input_file', type=str, 
-                        default='../../spatial-ovary/notebooks/oskar/merged_blobs_in_cluster_5.h5ad',
-                        help='Input h5ad file path (default: ../../spatial-ovary/notebooks/oskar/merged_blobs_in_cluster_5.h5ad)')
+                        default=str(data_dir(__file__) / 'merged_blobs_in_cluster_5.h5ad'),
+                        help='Input h5ad. Default is kidney/data/; the file is not in this repo -- ask Oskar')
     args = parser.parse_args()
     
     n_shape_ids_remove = args.n_shape_ids_remove
@@ -937,7 +939,12 @@ if __name__ == '__main__':
     
     print(f"Loading data from {input_file}...")
     # Load spatial ovary data (raw read counts in adata.X)
-    h5ad = sc.read_h5ad(input_file)
+    h5ad = sc.read_h5ad(require_input(
+        input_file,
+        what="the merged glomerular-capsule matrix this arm splits into semi-capsules",
+        source="--input-file; not in this repository -- it lives on Oskar's machine "
+               "at spatial-ovary/notebooks/oskar/, see handoff-external-dependencies",
+    ))
     
     # Check if shape_id column exists
     if 'shape_id' not in h5ad.obs.columns:

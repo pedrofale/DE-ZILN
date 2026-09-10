@@ -1,4 +1,6 @@
 import numpy as np
+
+from paths import results_dir
 import pandas as pd
 import statsmodels.stats.multitest as smm
 from utils_frozen import get_LN_lfcs
@@ -58,10 +60,12 @@ for d1 in [1., 1.5, 2.]:
             results["dispersion"] = d1
             df = pd.concat([df, pd.DataFrame([results])], ignore_index=True)
 
-df.to_csv(f"/Users/oskarkviman/Documents/"
-          f"phd/DE-ZILN/simul/"
-          f"test/NB_test_results/"
-          f"nde_mu{int(non_de_mu)}_be/"
-          f"d1_vs_d2_01_nde_mu_{int(non_de_mu)}.csv",
-          index=False)
+# Was an absolute path on Oskar's machine, which is why no one else could run
+# this. The "_be" in the old directory name recorded that this is the
+# batch-effect variant (log_batch_factor = 1 above); it is kept in the filename
+# so latex_tables.py can tell the two runs apart -- see question 5 in
+# handoff-math-questions, which is about exactly that ambiguity.
+out = results_dir(__file__) / f"nde_mu{int(non_de_mu)}_be"
+out.mkdir(parents=True, exist_ok=True)
+df.to_csv(out / f"d1_vs_d2_01_nde_mu_{int(non_de_mu)}.csv", index=False)
 

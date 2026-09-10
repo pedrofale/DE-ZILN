@@ -2,6 +2,8 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+
+from paths import require_input
 import matplotlib.pyplot as plt
 import argparse
 
@@ -27,7 +29,11 @@ def plot_fpr_results(csv_file, output_file, aspect_ratio=1.0, title_suffix=None)
         Text to append to the plot title (default: None)
     """
     # Read the CSV file
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(require_input(
+        csv_file,
+        what="this arm's FPR-vs-subsampling results",
+        source="run `python -m kidney.umi_null` first",
+    ))
     
     # Map method names to LaTeX-friendly names
     method_mapping = {

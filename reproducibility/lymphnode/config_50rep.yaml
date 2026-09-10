@@ -1,6 +1,11 @@
 # Config: 50 replicates, markers from pseudo-bulk PyDESeq2 DE (top 20 = Cluster-3, last 20 = Cluster-1).
 # Other options copied from config_subsampling_test_10rep.yaml.
-adata_path: "/home/hosein.toosi/ovary/podocytes/data/vishd-cluster1-cluster3-2um-with-clusters-subsampled.h5ad"
+# Was an absolute path on Hosein's machine:
+#   /home/hosein.toosi/ovary/podocytes/data/vishd-cluster1-cluster3-2um-with-clusters-subsampled.h5ad
+# Now arm-relative. The file is NOT in this repository -- it is the Visium HD
+# lymph node matrix behind fig:visium_jaccard and fig:visium_gsea in the Nature
+# submission. Ask Hosein; see handoff-external-dependencies.
+adata_path: "lymphnode/data/vishd-cluster1-cluster3-2um-with-clusters-subsampled.h5ad"
 min_cells_per_gene: 2
 # Cells with fewer than this many 2um spots after subsampling are excluded (default 5)
 min_spots_per_cell: 3

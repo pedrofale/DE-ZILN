@@ -36,6 +36,8 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+
+from paths import require_input
 import scanpy as sc
 import scipy.sparse as sp
 import statsmodels.stats.multitest as smm
@@ -521,8 +523,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Load data
-    print(f"Loading data from {args.input}...")
-    adata = sc.read_h5ad(args.input)
+    adata_path = require_input(
+        args.input,
+        what="the AnnData to run cluster-versus-rest DE on",
+        source="--input; the lymph node matrix is not in this repository, ask Hosein",
+    )
+    print(f"Loading data from {adata_path}...")
+    adata = sc.read_h5ad(adata_path)
     print(f"Data loaded. Shape: {adata.shape}")
     
     # Run DE analysis

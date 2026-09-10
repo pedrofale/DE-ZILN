@@ -17,6 +17,8 @@ import scanpy as sc
 import scipy.sparse as sp
 import pandas as pd
 
+from paths import require_input
+
 # Run from reproducibility/ as `python -m celltype.de`, which puts that
 # directory on sys.path -- no path manipulation needed.
 from de_utils import (
@@ -58,7 +60,12 @@ def main():
     group_1, group_2 = config["celltype_values"]
 
     print(f"Loading AnnData from {adata_path}...")
-    adata = sc.read_h5ad(adata_path)
+    adata = sc.read_h5ad(require_input(
+        adata_path,
+        what="the PBMC3k AnnData this arm compares cell types in",
+        source="config.yaml's adata_path, resolved from reproducibility/. "
+               "Build it or fetch the 10x PBMC3k matrix",
+    ))
 
     # Basic filtering
     print("Filtering cells with fewer than 200 genes expressed...")

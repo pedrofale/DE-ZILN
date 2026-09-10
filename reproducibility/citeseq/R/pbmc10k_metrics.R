@@ -6,8 +6,16 @@ library(Seurat)
 library(tidyverse)
 library(xtable)
 
-results <- fread("10X_PBMC_10K/CITE_seq_results.csv")
-metrics <- fread("10X_PBMC_10K/CITE_seq_metrics.csv")
+# Paths are relative to this script's directory (citeseq/R/), which is what
+# ZILN.Rproj sets as the R working directory. The arm's committed input lives in
+# citeseq/data/; everything this chain produces goes to citeseq/results/.
+data_dir <- "../data/"
+results_dir <- "../results/"
+dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
+
+
+results <- fread(paste0(results_dir, "CITE_seq_results.csv"))
+metrics <- fread(paste0(results_dir, "CITE_seq_metrics.csv"))
 names(metrics)[1] <- "Metric"
 
 mean(subset(metrics, Metric == "accuracy")$LN)
@@ -35,7 +43,7 @@ xt <- results_tbl %>%
   pivot_wider(names_from = Method, values_from = cell) %>%
   arrange(Metric) %>% 
   xtable()
-print(xt, include.rownames = FALSE, type="latex", file = "10X_PBMC_10K/CITE_seq_metrics.tex")
+print(xt, include.rownames = FALSE, type="latex", file = paste0(results_dir, "CITE_seq_metrics.tex"))
 
 results[is_signal_gene == TRUE,.(mean((ln_lfc - true_lfc)^2),
                                  mean((scanpy_lfc - true_lfc)^2))] 
@@ -55,7 +63,7 @@ pl <- results_long %>%
   ylab("Estimated LFC") +
   facet_grid(~ Method) 
 pl
-ggsave("10X_PBMC_10K/CITE_seq_lfc_plot.png", pl)
+ggsave(paste0(results_dir, "CITE_seq_lfc_plot.png"), pl)
 
 pl <- results_long %>% 
   ggplot(aes(x = true_lfc, y = true_lfc - LFC)) +
@@ -66,10 +74,10 @@ pl <- results_long %>%
   ylab("Bias") +
   facet_grid(~ Method) 
 pl
-ggsave("10X_PBMC_10K/CITE_seq_lfc_error_plot.png", pl)
+ggsave(paste0(results_dir, "CITE_seq_lfc_error_plot.png"), pl)
 
 # Load Seurat results
-seurat_lfc_results <- readRDS("10X_PBMC_10K/seurat_lfc_results.rds")
+seurat_lfc_results <- readRDS(paste0(results_dir, "seurat_lfc_results.rds"))
 seurat_lfc_results %>% 
   filter(true_lfcs != 0) %>% 
   ggplot(aes(true_lfcs, seurat_lfc)) + 
@@ -104,7 +112,7 @@ pl <- merged_results_long %>%
   xlab("True LFC") +
   ylab("Estimated LFC") +
   facet_grid(~ Method) 
-ggsave(glue("10X_PBMC_10K/CITE_seq_lfc_plot_all_methods.png"), pl)
+ggsave(glue("{results_dir}CITE_seq_lfc_plot_all_methods.png"), pl)
 
 pl <- merged_results_long %>% 
   ggplot(aes(x = true_lfc, y = true_lfc - LFC)) +
@@ -115,5 +123,5 @@ pl <- merged_results_long %>%
   ylab("Bias") +
   facet_grid(~ Method) 
 pl
-ggsave("10X_PBMC_10K/CITE_seq_lfc_error_plot_all.png", pl)
+ggsave(paste0(results_dir, "CITE_seq_lfc_error_plot_all.png"), pl)
 

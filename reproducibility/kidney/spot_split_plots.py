@@ -2,6 +2,8 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+
+from paths import require_input
 import json
 import matplotlib.pyplot as plt
 import argparse
@@ -21,7 +23,11 @@ def get_method_display_name(method):
 
 def plot_tpr_fpr_results(csv_file, output_file):
     """Plot TPR and FPR vs p for all methods."""
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(require_input(
+        csv_file,
+        what="this arm's spot-splitting results",
+        source="run `python -m kidney.spot_split` first",
+    ))
     
     # Get unique methods and p values
     methods = df['method'].unique()
@@ -81,7 +87,11 @@ def plot_tpr_fpr_results(csv_file, output_file):
 
 def plot_ap_pr_auc_results(csv_file, output_file):
     """Plot AP and PR-AUC vs p for all methods."""
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(require_input(
+        csv_file,
+        what="this arm's spot-splitting results",
+        source="run `python -m kidney.spot_split` first",
+    ))
     
     # Get unique methods and p values
     methods = df['method'].unique()
@@ -287,7 +297,11 @@ def plot_summary_figure(csv_file, json_file, output_file, q, lfc):
     Global legend (colors) indicates methods; PR-curves subplot legend shows p-pattern mapping.
     """
     # Load CSV and JSON
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(require_input(
+        csv_file,
+        what="this arm's spot-splitting results",
+        source="run `python -m kidney.spot_split` first",
+    ))
     with open(json_file, 'r') as f:
         curve_data = json.load(f)
     p_values_json = np.array(curve_data['p_values'])
@@ -425,7 +439,11 @@ if __name__ == '__main__':
     output_prefix = args.output_prefix
     
     # Read q and lfc from CSV (should be same for all rows)
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(require_input(
+        csv_file,
+        what="this arm's spot-splitting results",
+        source="run `python -m kidney.spot_split` first",
+    ))
     q = df['q'].iloc[0]
     lfc = df['lfc'].iloc[0]
     

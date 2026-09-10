@@ -1,4 +1,7 @@
 import os
+import pathlib
+
+from paths import data_dir, require_input, results_dir
 import anndata as ann
 import pandas as pd
 import numpy as np
@@ -26,8 +29,15 @@ def plot(ax, true_lfc, est_lfc, title, xlims, ylims, ylabel=False):
 
 
 # Load the base data
-memory_CD4 = ann.read_h5ad("R/10X_PBMC_10K/memory_CD4.h5ad")
-os.makedirs("R/10X_PBMC_10K/figures/", exist_ok=True)
+DATA = data_dir(__file__)
+RESULTS = results_dir(__file__)
+memory_CD4 = ann.read_h5ad(require_input(
+    DATA / "memory_CD4.h5ad",
+    what="memory CD4 T cells from the 10x PBMC10k CITE-seq run, ADT-gated",
+    source="rebuild with citeseq/R/pbmc10k_process.R then pbmc10k_to_h5ad.R, "
+           "or take it from the Zenodo deposit (decision-data-out-of-head)",
+))
+os.makedirs(RESULTS / "figures", exist_ok=True)
 
 np.random.seed(1)
 replicates = 100
@@ -145,11 +155,11 @@ for i in tqdm(range(replicates), desc="Running replicates"):
     xlims = [np.min(de_results["true_lfc"]) - 0.2, np.max(de_results["true_lfc"]) + 0.2]
     plot(ax1, de_results['true_lfc'], de_results['ln_lfc'], "LN vs. True LFC", xlims, ylims, ylabel=True)
     plot(ax2, de_results['true_lfc'], de_results['scanpy_lfc'], "Scanpy vs. True LFC", xlims, ylims, ylabel=False)
-    fig.savefig(f"R/10X_PBMC_10K/figures/lfc_{i}.png")
+    fig.savefig(RESULTS / "figures" / f"lfc_{i}.png")
     plt.close(fig)
 
     # 9. Save the data so that we can run using Seurat in R.
-    rep_path = f"R/10X_PBMC_10K/replicates/rep{i}/"
+    rep_path = f"{RESULTS}/replicates/rep{i}/"
     os.makedirs(rep_path, exist_ok=True)
     np.savetxt(f"{rep_path}/gene_names.csv", filtered_gene_names, delimiter=",", fmt="%s")
     np.savetxt(f"{rep_path}/true_lfcs.csv", true_lfcs_filtered, delimiter=",")
@@ -164,7 +174,7 @@ print(f"Wilcoxon MSE:    {np.mean(mse_scanpy_list):.4f} +/- {np.std(mse_scanpy_l
 
 # Combine all results into one big DataFrame
 all_results_df = pd.concat(all_results_list)
-all_results_df.to_csv("R/10X_PBMC_10K/CITE_seq_results.csv")
+all_results_df.to_csv(RESULTS / "CITE_seq_results.csv")
 
 all_metrics_df = pd.concat(metrics_list)
-all_metrics_df.to_csv("R/10X_PBMC_10K/CITE_seq_metrics.csv")
+all_metrics_df.to_csv(RESULTS / "CITE_seq_metrics.csv")

@@ -53,6 +53,8 @@ except ImportError:
     USE_SHARED_MEMORY = False  # Python < 3.8: workers load adata from path
 
 import numpy as np
+
+from paths import require_input
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
@@ -402,7 +404,12 @@ def init_worker_load_from_path(adata_path, cluster_column, cell_id_column, marke
     """Initialize worker by loading adata from disk (fallback when shared_memory not available, e.g. Python 3.7)."""
     global _shared_data
     _limit_threads()
-    adata = sc.read_h5ad(adata_path)
+    adata = sc.read_h5ad(require_input(
+        adata_path,
+        what="the Visium HD lymph node matrix with cluster and cell_id columns",
+        source="not in this repository -- ask Hosein Toosi; see "
+               "handoff-external-dependencies",
+    ))
     if sparse.issparse(adata.X):
         X_csr = adata.X.tocsr()
     else:

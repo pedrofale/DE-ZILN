@@ -865,7 +865,7 @@ def _arm_c(arm, lntest, reps=None):
     """large_scale_CITE_seq_exp.py -- planted signal on real CITE-seq counts.
 
     Transcribed from large_scale_CITE_seq_exp.py:29-135. Seed 1, 100 replicates
-    over R/10X_PBMC_10K/memory_CD4.h5ad with the MT- genes dropped. Per
+    over citeseq/data/memory_CD4.h5ad with the MT- genes dropped. Per
     replicate the draw order is the group assignment over all cells, then the
     100 Gaussian log-fold changes, then the 100 gene indices they are applied to.
 
@@ -898,12 +898,12 @@ def _arm_c(arm, lntest, reps=None):
             "memory_CD4.h5ad"
         ) from None
 
-    path = REPO_ROOT / "R" / "10X_PBMC_10K" / "memory_CD4.h5ad"
+    path = pathlib.Path(__file__).resolve().parent / "citeseq" / "data" / "memory_CD4.h5ad"
     if not path.exists():
         raise MissingInput(
             f"{path} is missing. It is a derived intermediate, rebuildable from "
-            "the public 10x matrix by R/pbmc10k_process.R and "
-            "R/pbmc10k_to_h5ad.R, and it is one of the files "
+            "the public 10x matrix by citeseq/R/pbmc10k_process.R and "
+            "pbmc10k_to_h5ad.R, and it is one of the files "
             "decision-data-out-of-head deposits on Zenodo."
         )
     memory_CD4 = ann.read_h5ad(path)

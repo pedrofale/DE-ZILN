@@ -8,6 +8,8 @@ Usage:
 import argparse
 import numpy as np
 import pandas as pd
+
+from paths import require_input
 import matplotlib.pyplot as plt
 import matplotlib
 
@@ -82,7 +84,11 @@ def plot_de_results(csv_file, output_file, title_suffix=None):
     """
     # Load data
     print(f"Loading data from {csv_file}...")
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(require_input(
+        csv_file,
+        what="this arm's DE-with-planted-DEGs results",
+        source="run `python -m kidney.umi_de` first",
+    ))
     
     # Get unique methods and p values
     methods = df['method'].unique()

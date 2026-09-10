@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import pandas as pd
 
+from paths import data_dir, require_input
+
 # Run from reproducibility/ as `python -m kidney.umi_de`, which puts that
 # directory on sys.path -- no path manipulation needed.
 from utils_frozen import get_LN_lfcs as get_DELN_lfcs
@@ -374,7 +376,11 @@ if __name__ == '__main__':
     
     print(f"Loading data...")
     # Load spatial ovary data (raw read counts in adata.X)
-    h5ad = sc.read_h5ad("../../spatial-ovary/notebooks/oskar/merged_blobs_in_cluster_5.h5ad")
+    h5ad = sc.read_h5ad(require_input(
+        data_dir(__file__) / "merged_blobs_in_cluster_5.h5ad",
+        what="the merged glomerular-capsule matrix arms D and E subsample",
+        source="Visium HD kidney capsules. Not in this repository and not public: it lives on Oskar's machine at spatial-ovary/notebooks/oskar/. Ask Oskar, or see handoff-external-dependencies",
+    ))
     # Make gene names unique using gene_id
     h5ad.var = h5ad.var.reset_index().set_index('gene_ids')
     # Robustly convert to a dense numpy array

@@ -6,12 +6,20 @@ library(Seurat)
 library(tidyverse)
 library(xtable)
 
+# Paths are relative to this script's directory (citeseq/R/), which is what
+# ZILN.Rproj sets as the R working directory. The arm's committed input lives in
+# citeseq/data/; everything this chain produces goes to citeseq/results/.
+data_dir <- "../data/"
+results_dir <- "../results/"
+dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
+
+
 # Run Seurat to get LFC estimates.
 replicates <- 0:99
 lfc_results <- list()
 for (rep_no in replicates)
 {
-  data_path <- glue("10X_PBMC_10K/replicates/rep{rep_no}/")
+  data_path <- glue("{results_dir}replicates/rep{rep_no}/")
   X <- read.csv(glue("{data_path}/X.csv"), header=F)
   Y <- read.csv(glue("{data_path}/Y.csv"), header=F)
   true_lfcs <- read.csv(glue("{data_path}/true_lfcs.csv"), header=F)
@@ -42,17 +50,17 @@ for (rep_no in replicates)
 
 lfc_results_dt <- rbindlist(lfc_results, idcol = TRUE)
 lfc_results_dt$rep <- lfc_results_dt$.id - 1
-saveRDS(lfc_results_dt, "10X_PBMC_10K/seurat_lfc_results.rds")
+saveRDS(lfc_results_dt, paste0(results_dir, "seurat_lfc_results.rds"))
 
 pl <- ggplot(lfc_results_dt, aes(true_lfcs, seurat_lfc)) + 
   geom_point() +
   geom_abline(slope=1, intercept=0, color="red", linetype="dashed")
 pl
-ggsave(glue("10X_PBMC_10K/CITE_seq_seurat_lfc_plot.png"), pl)
+ggsave(glue("{results_dir}CITE_seq_seurat_lfc_plot.png"), pl)
 
 # Look at one specific replicate to see why Seurat's LFC is worse.
 rep_no <- 2
-data_path <- glue("10X_PBMC_10K/replicates/rep{rep_no}/")
+data_path <- glue("{results_dir}replicates/rep{rep_no}/")
 X <- read.csv(glue("{data_path}/X.csv"), header=F)
 Y <- read.csv(glue("{data_path}/Y.csv"), header=F)
 gene_names <- read.csv(glue("{data_path}/gene_names.csv"), header = FALSE)

@@ -21,6 +21,8 @@ import anndata as ad
 import scipy.sparse as sp
 import pandas as pd
 
+from paths import require_input
+
 # pandas >= 3.0 defaults to Arrow-backed string dtype, which anndata cannot
 # serialize to h5ad. Disable it before any data is read so all string indices
 # and columns stay as plain numpy object dtype.
@@ -93,6 +95,11 @@ def load_input_adata(adata_path):
     10x data (a directory or .tar.gz archive) and the standard PBMC3k QC from the
     Seurat/Scanpy tutorial is applied, returning the full (all-genes) matrix.
     """
+    require_input(
+        adata_path,
+        what="the PBMC3k input: an .h5ad, or a directory or .tar.gz of raw 10x data",
+        source="config.yaml's adata_path, resolved from reproducibility/",
+    )
     if adata_path.endswith(".h5ad"):
         return sc.read_h5ad(adata_path)
 
