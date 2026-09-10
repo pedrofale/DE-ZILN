@@ -1,8 +1,8 @@
 import numpy as np
-from typing import Optional
 import scipy.sparse as sp
 
 from ._ln_test import TRIGAMMA_EXACT, get_LN_lfcs, get_LN_lfcs_sparse
+
 
 def _to_dense(a):
     """Convert (possibly sparse) matrix to a dense numpy array."""
@@ -47,7 +47,7 @@ def rank_genes_groups_ln(
     groupby: str,
     groups=None,
     reference: str = "rest",
-    n_genes: Optional[int] = None,
+    n_genes: int | None = None,
     use_raw: bool | None = None,
     layer: str | None = None,
     key_added: str = "rank_genes_groups",
