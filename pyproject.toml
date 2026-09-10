@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lntest"
+version = "0.1.0"
+description = "LN's t-test: differential expression testing on an asymptotically unbiased log-fold-change estimator"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Oskar Kviman" },
+    { name = "Pedro F. Ferreira" },
+]
+maintainers = [
+    { name = "Pedro F. Ferreira", email = "pedro.miguel.ferreira.pf@gmail.com" },
+]
+license = { file = "LICENSE" }
+keywords = ["single-cell", "differential-expression", "transcriptomics", "scanpy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "numpy>=1.23",
+    "scipy>=1.9",
+    # For Benjamini-Hochberg, imported lazily inside the branch that uses it --
+    # the same arrangement scanpy has, which declares statsmodels>=0.14.5 and
+    # imports multipletests inside `_rank_genes_groups.py`. Correcting the same
+    # way scanpy does is worth more than shedding the dependency, and every
+    # scanpy user already has it.
+    "statsmodels>=0.13",
+]
+
+[project.urls]
+# The shared repository, not the fork this happens to be developed on. Oskar
+# intends to rename it from DE-ZILN to lntest; GitHub keeps a permanent redirect
+# for a renamed repository, so this URL survives the change and should be left
+# alone until the rename actually happens.
+Homepage = "https://github.com/okviman/DE-ZILN"
+Source = "https://github.com/okviman/DE-ZILN"
+
+[project.optional-dependencies]
+# anndata and pandas are needed only to *build* the objects the wrapper is
+# called with. The wrapper is duck-typed and never imports either, so they are
+# test dependencies rather than runtime ones. scanpy is here so the corr_method
+# tests can check we stay interchangeable with scanpy's own correction.
+test = ["anndata>=0.9", "pandas>=1.5", "scanpy>=1.10", "pytest>=7"]
+anndata = []  # kept as an accepted-but-empty alias; the extra is no longer needed
+
+[tool.setuptools]
+packages = ["lntest"]
+package-dir = { "" = "src" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

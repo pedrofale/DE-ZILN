@@ -1,0 +1,17 @@
+# Results. Every arm writes here; nothing under it is tracked.
+output/
+
+# Experiment inputs, fetched or derived rather than committed. decision-data-out-of-head
+# has fetch_data.py rebuild this from data_sources.yaml.
+data/
+*/data/
+!*/legacy/data/
+!nullsplit/data/
+!citeseq/data/
+
+# Local caches used to keep Numba/Matplotlib writable under sandboxing
+.numba_cache/
+.mpl_cache/
+
+# Temp config used to point clustering/metrics.py at the DE-results h5ad
+.metrics_config.yaml

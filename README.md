@@ -1,37 +1,21 @@
 # LN's $t$-test
-Differential expression analysis with LN's $t$-test
 
-# Small test
-RECOMB requests a small test for the reviewers. To this end, we included small_test.py in our repo. It reproduces a single run of the averaged results in Table 2 in the submission. To this end, please keep in mind that the results are not expected to exactly reproduce the results in our submission. To reproduce the table, instead follow the intructions below.
+Differential expression testing on an asymptotically unbiased log-fold-change estimator.
 
-# Reproducing RECOMB submission results
+## Installation
 
-### Section 4.1
-To reproduce Fig. 1, run variance_vs_metric.py.
+```bash
+pip install -e .
+```
 
-To reproduce the Table 2, first run large_scale_NB_DE_test.py (the NB parameters need to be adjusted according to the text in the submission in order to reproduce Table 1), and then run large_scale_NB_latex_tables.py with the correct path to the results generated via execution of the former script.
+## Usage
 
-## CITE-seq experiments
+```python
+from lntest import rank_genes_groups_ln
 
-- The raw expression data was downloaded from 10x https://cf.10xgenomics.com/samples/cell-vdj/5.0.0/sc5p_v2_hs_PBMC_10k/sc5p_v2_hs_PBMC_10k_filtered_feature_bc_matrix.h5.
-- Data processing code is found in `R/`.
-    + `pbmc10k_process.R`: loads the raw data; use ADT markers to identify memory CD4++ T cells. Saves the data to `10X_PBMC_10K/pbmc10k_cd4_memory.rds` (also saves all of the expression data to `10X_PBMC_10K/pbmc10k.rds` for further experimentation).
-    + `pbmc10k_to_h5ad.R`: filters row expression genes and converts `10X_PBMC_10K/pbmc10k_cd4_memory.rds` to `10X_PBMC_10K/memory_CD4.h5ad` for interoperatability with `scanpy`.
-- Code to run the experiments to comapre LN's test to `scanpy` is found in `large_scale_CITE_seq_exp.py`.
-    + Loads `10X_PBMC_10K/memory_CD4.h5ad`
-    + Performs permutation to generate 100 replicates of the data.
-    + For each replicate, randomly selects 100 genes along with random LFC values; perturbs the counts.
-- Code to process the results are also found in `R/`.
-    + `pbmc10k_seurat.R`: generates Seurat LFC estimates. **The result from this analysis was not included in the paper because it did not affect the conclusion.**
-    + `pbmc10k_metrics.R`: processes the LFC and the test results and generates figures and tables.
-- Figures and result files are added to `10X_PBMC_10K/`.
+rank_genes_groups_ln(adata, groupby="leiden", layer="norm_counts")
+adata.uns["rank_genes_groups"]["logfoldchanges"]
+adata.uns["rank_genes_groups"]["lfc_se"]      # SE of the LFC; lfc ± 1.96·se is the interval
+```
 
-## Visium HD tests
-    - Glomerular capsules in the  kidney sample
-    The files are in notebooks/test folder
-        - preprocess_VisumHD_Kidney.ipynb is the preprocessing step that creates two h5ad files
-            - merged_blobs_in_cluster_5.h5ad: contains gene count matrix for individual capsules, use for UMI count sub-sampling tests
-            - podocytes_2um.h5ad : contains gene count matrix for each 2um spot in each capsule, used for spot sub-sampling tests
-        - vishd_test_parallel.py and vishd_test_de_parallel.py run the count sub-sampling tests, and plot_de_results.py and plot-fpr_results.py are used to create the plots
-        - vishd_test_shape_split_shared.py run the spot sub-sampling tests and visualize_results.py is used to create the plots.  
-
+Takes **normalised, not log-transformed** counts.

@@ -1,3 +1,24 @@
 .ipynb_checkpoints
 .Rproj.user
 __pycache__
+.DS_Store
+
+# Downloaded / generated data — keep out of git
+notebooks/scrnaseq_reanalyses/data/
+notebooks/scrnaseq_reanalyses/cache/
+notebooks/scrnaseq_reanalyses/output/
+reproducibility/data/
+reproducibility/celltype/data/
+reproducibility/output/
+*.h5ad
+*.gmt
+
+# IDE and editor state
+.idea/
+.vscode/
+
+# Packaging artifacts
+build/
+dist/
+*.egg-info/
+.pytest_cache/
