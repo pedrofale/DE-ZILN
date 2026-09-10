@@ -5,9 +5,9 @@ function a scanpy user actually calls, and the one a scanpy integration would
 dispatch to. Nothing here re-tests the statistics -- it tests the contract laid
 over them.
 
-The wrapper needs anndata, pandas and statsmodels, which are the ``anndata``
-optional extra rather than core dependencies, so the whole module skips when
-they are absent.
+Building the objects the wrapper is called with needs anndata and pandas, which
+are test dependencies rather than runtime ones -- the wrapper is duck-typed and
+imports neither. The whole module skips when they are absent.
 
 Three things are worth knowing about what is asserted below.
 

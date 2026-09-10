@@ -21,12 +21,12 @@ from lntest import get_LN_lfcs, get_LN_lfcs_sparse
 
 ALPHA = 0.05
 
-# The dense and sparse entry points are one implementation as of 2026-09-07:
-# get_LN_lfcs delegates to get_LN_lfcs_sparse. They previously diverged by
-# ~1e-6 (dense carried float32 intermediates), which is outside the rtol=1e-5
-# that scanpy asserts across array types. Everything below is therefore held to
-# float64 tolerance; a regression that reintroduces a second code path will
-# show up here first.
+# The dense and sparse entry points are one implementation: get_LN_lfcs
+# delegates to get_LN_lfcs_sparse. Two implementations of the same algebra had
+# cost ~1e-6 of disagreement, from float32 intermediates on the dense side,
+# which is outside the rtol=1e-5 scanpy asserts across array types. Everything
+# below is therefore held to float64 tolerance; a regression that reintroduces
+# a second code path will show up here first.
 FLOAT64_RTOL = 1e-12
 
 

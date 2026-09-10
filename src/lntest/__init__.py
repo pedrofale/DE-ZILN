@@ -6,11 +6,6 @@ This module is the whole public surface. The two implementation modules are
 private, following scanpy, which keeps ``rank_genes_groups`` in
 ``scanpy/tools/_rank_genes_groups.py`` and exposes only the name.
 
-``_rank_genes_groups`` was called ``scanpy_wrapper`` until 2026-09-10. The name
-was wrong in both directions: the module never imports scanpy, so it wraps
-nothing, and if scanpy ever dispatches to this package then scanpy is the
-wrapper, not us. It is scanpy-*shaped*, which is what its new name says.
-
 Everything here imports eagerly, and can, because the package depends on numpy,
 scipy and statsmodels alone -- and statsmodels only inside the Benjamini-Hochberg
 branch that needs it, which is again what scanpy does.
