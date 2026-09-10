@@ -407,8 +407,9 @@ def init_worker_load_from_path(adata_path, cluster_column, cell_id_column, marke
     adata = sc.read_h5ad(require_input(
         adata_path,
         what="the Visium HD lymph node matrix with cluster and cell_id columns",
-        source="not in this repository -- ask Hosein Toosi; see "
-               "handoff-external-dependencies",
+        source="rebuild it with: bash lymphnode/reproduce_vishd_cluster1_cluster3.sh "
+               "(downloads 4.4 GB from 10x, then several hours of "
+               "point-in-polygon assignment)",
     ))
     if sparse.issparse(adata.X):
         X_csr = adata.X.tocsr()

@@ -947,8 +947,8 @@ if __name__ == '__main__':
     h5ad = sc.read_h5ad(require_input(
         input_file,
         what="the merged glomerular-capsule matrix this arm splits into semi-capsules",
-        source="--input-file; not in this repository -- it lives on Oskar's machine "
-               "at spatial-ovary/notebooks/oskar/, see handoff-external-dependencies",
+        source="--input-file; not in this repository, but public and rebuildable: "
+               "run kidney/preprocess.ipynb top to bottom (downloads 6.5 GB from 10x)",
     ))
     
     # Check if shape_id column exists

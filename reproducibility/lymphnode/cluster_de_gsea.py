@@ -290,7 +290,8 @@ def main():
     adata_path = require_input(
         args.input,
         what="the AnnData holding the two clusters to compare",
-        source="--input; the lymph node matrix is not in this repository, ask Hosein",
+        source="--input; rebuild the lymph node matrix with: "
+               "bash lymphnode/reproduce_vishd_cluster1_cluster3.sh",
     )
     print(f"Loading data from {adata_path}...")
     adata = sc.read_h5ad(adata_path)

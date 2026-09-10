@@ -260,7 +260,9 @@ if __name__ == '__main__':
     h5ad = sc.read_h5ad(require_input(
         data_dir(__file__) / "merged_blobs_in_cluster_5.h5ad",
         what="the merged glomerular-capsule matrix arms D and E subsample",
-        source="Visium HD kidney capsules. Not in this repository and not public: it lives on Oskar's machine at spatial-ovary/notebooks/oskar/. Ask Oskar, or see handoff-external-dependencies",
+        source="Visium HD kidney capsules, cluster-5 blobs. Not in this "
+               "repository, but public and rebuildable: run kidney/preprocess.ipynb "
+               "top to bottom (downloads 6.5 GB from 10x)",
     ))
     # Make gene names unique using gene_id
     h5ad.var = h5ad.var.reset_index().set_index('gene_ids')
