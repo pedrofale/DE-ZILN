@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import digamma, trigamma, get_intervals
+from utils_frozen import digamma, trigamma, get_intervals
 
 
 def generate_count_data(r, p, n):

@@ -17,10 +17,8 @@ import scanpy as sc
 import scipy.sparse as sp
 import pandas as pd
 
-# Import from parent (reproducibility) folder
-_rep_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _rep_dir not in sys.path:
-    sys.path.insert(0, _rep_dir)
+# Run from reproducibility/ as `python -m celltype.de`, which puts that
+# directory on sys.path -- no path manipulation needed.
 from de_utils import (
     prepare_adata_layers,
     run_ln_de,

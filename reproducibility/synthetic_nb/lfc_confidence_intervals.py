@@ -1,5 +1,5 @@
 import numpy as np
-from utils import get_scanpy_lfcs, get_DELN_lfcs
+from utils_frozen import get_scanpy_lfcs, get_DELN_lfcs
 import matplotlib.pyplot as plt
 
 """

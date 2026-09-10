@@ -3,8 +3,8 @@
 
 import numpy as np
 import statsmodels.stats.multitest as smm
-from utils import get_LN_lfcs
-from scanpy_ttest import get_test_results, scanpy_sig_test
+from utils_frozen import get_LN_lfcs
+from baselines import get_test_results, scanpy_sig_test
 
 
 np.random.seed(0)

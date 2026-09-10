@@ -11,13 +11,10 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import pandas as pd
 
-# Ensure project root (DE-ZILN) is on sys.path so local modules resolve
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
-from utils import get_LN_lfcs as get_DELN_lfcs
-from scanpy_ttest import get_test_results, scanpy_sig_test
+# Run from reproducibility/ as `python -m kidney.umi_null`, which puts that
+# directory on sys.path -- no path manipulation needed.
+from utils_frozen import get_LN_lfcs as get_DELN_lfcs
+from baselines import get_test_results, scanpy_sig_test
 
 
 def fpr_test_single(X, Y):

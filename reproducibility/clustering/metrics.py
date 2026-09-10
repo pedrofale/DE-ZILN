@@ -20,9 +20,8 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-_rep_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _rep_dir not in sys.path:
-    sys.path.insert(0, _rep_dir)
+# Run from reproducibility/ as `python -m clustering.metrics`, which puts that
+# directory on sys.path -- no path manipulation needed.
 from evaluation_utils import (
     jaccard_index,
     recall,

@@ -3,9 +3,9 @@ import pandas as pd
 import scanpy as sc
 import statsmodels.stats.multitest as smm
 from sklearn.metrics import confusion_matrix
-from utils import get_LN_lfcs
+from utils_frozen import get_LN_lfcs
 import matplotlib.pyplot as plt
-from scanpy_ttest import scanpy_sig_test, get_test_results
+from baselines import scanpy_sig_test, get_test_results
 
 
 np.random.seed(0)

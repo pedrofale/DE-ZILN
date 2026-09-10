@@ -3,7 +3,7 @@ import pandas as pd
 import scanpy as sc
 import statsmodels.stats.multitest as smm
 from sklearn.metrics import confusion_matrix
-from utils import get_DELN_lfcs
+from utils_frozen import get_DELN_lfcs
 import matplotlib.pyplot as plt
 
 

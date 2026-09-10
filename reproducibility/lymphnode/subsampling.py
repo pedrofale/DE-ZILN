@@ -29,10 +29,8 @@ Optional in config (defaults used if omitted):
 import os
 import sys
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-if script_dir not in sys.path:
-    sys.path.insert(0, script_dir)
-
+# Run from reproducibility/ as `python -m lymphnode.subsampling`, which puts that
+# directory on sys.path -- no path manipulation needed.
 # Force single-threaded BLAS/OpenMP BEFORE any numeric library imports
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"

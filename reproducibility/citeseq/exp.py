@@ -3,9 +3,9 @@ import anndata as ann
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import *
+from utils_frozen import *
 import statsmodels.stats.multitest as smm
-from scanpy_ttest import get_test_results, scanpy_sig_test
+from baselines import get_test_results, scanpy_sig_test
 from tqdm import tqdm
 
 def plot(ax, true_lfc, est_lfc, title, xlims, ylims, ylabel=False):

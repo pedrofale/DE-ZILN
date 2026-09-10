@@ -1,5 +1,5 @@
 import numpy as np
-from utils import get_intervals_synthetic_data
+from utils_frozen import get_intervals_synthetic_data
 
 
 if __name__ == '__main__':

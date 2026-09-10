@@ -6,12 +6,9 @@ import scanpy as sc
 import scipy.sparse as sp
 import argparse
 
-# Ensure project root (DE-ZILN) is on sys.path so local modules resolve
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
-from de_test_with_scores import (
+# Run from reproducibility/ as `python -m lymphnode.cluster_de_gsea`, which puts that
+# directory on sys.path -- no path manipulation needed.
+from lymphnode.gsea_utils import (
     de_test_with_scores, 
     run_gsea_for_all_methods, 
     save_gsea_results,
@@ -412,7 +409,7 @@ def main():
     use_gseapy_prerank = False  # Initialize variable
     if gene_sets is not None:
         print("\nRunning GSEA...")
-        from de_test_with_scores import run_gsea_for_all_methods
+        from lymphnode.gsea_utils import run_gsea_for_all_methods
         
         # Get gene names after filtering (from DE results)
         if 'gene_names' in all_de_results['LN_test']:

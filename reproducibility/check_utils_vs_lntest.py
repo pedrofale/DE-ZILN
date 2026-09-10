@@ -78,17 +78,24 @@ ALPHA = 0.05
 FROZEN_FUNCS = ["trigamma", "get_DELN_lfcs", "get_LN_lfcs",
                 "compute_p_vals", "get_t_statistic"]
 
-# Paths decision-repo-restructure deletes. Used to assert -- rather than grep and
-# hope -- that the utils API surface with no lntest counterpart has no caller
-# that will survive the refactor.
-DELETION_LIST = (
-    "notebooks/scrnaseq_reanalyses/",
-    "notebooks/test/de_test_with_scores.py",
-    "notebooks/test/de_celltype_vs_rest.py",
-    "notebooks/test/de_cluster_comparison_gsea.py",
+# Callers of the utils API surface that has no lntest counterpart. These do NOT
+# migrate: decision-retire-utils-py's 2026-09-10 amendment keeps utils.py as
+# reproducibility/utils_frozen.py precisely so they can keep importing it.
+#
+# This constant was DELETION_LIST until 2026-09-10, when it named paths that
+# were about to be deleted. Nothing is deleted any more -- the 3c re-judgement
+# kept all 16 candidates -- so the assertion below changed premise with it. It
+# used to read "every caller is deleted, so nothing needs translating"; it now
+# reads "every caller stays on the frozen estimator, so nothing needs
+# translating". Same conclusion, an honest reason, and one that survives a
+# reader checking whether the files are actually gone.
+STAYS_ON_FROZEN = (
+    "reproducibility/lymphnode/gsea_utils.py",
+    "reproducibility/lymphnode/ln_de_vs_rest.py",
+    "reproducibility/lymphnode/cluster_de_gsea.py",
     "reproducibility/celltype/",
-    "generate_lfc_data.py",
-    "scanpy_confidence_interval_test.py",
+    "reproducibility/synthetic_nb/generate_lfc_data.py",
+    "reproducibility/synthetic_nb/lfc_confidence_intervals.py",
 )
 
 
@@ -420,15 +427,15 @@ def check_api_mismatches(lntest):
             continue
         if "return_log_abs_statistic=True" in path.read_text():
             callers.append(rel)
-    survivors = [c for c in callers if not any(c.startswith(d) for d in DELETION_LIST)]
+    survivors = [c for c in callers if not any(c.startswith(d) for d in STAYS_ON_FROZEN)]
     findings.append({
         "mismatch": "return_log_abs_statistic has no lntest counterpart",
         "callers": callers,
-        "callers_surviving_the_refactor": survivors,
+        "callers_not_covered_by_utils_frozen": survivors,
         "ok": not survivors,
-        "detail": "Nothing to translate if every caller is deleted."
+        "detail": "Nothing to translate: every caller stays on utils_frozen."
                   if not survivors else
-                  "A caller survives the refactor and has no lntest equivalent.",
+                  "A caller reaches lntest and has no equivalent there.",
     })
 
     # (2) return_standard_error and return_statistic are mutually exclusive in

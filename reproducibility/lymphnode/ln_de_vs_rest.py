@@ -41,12 +41,9 @@ import scipy.sparse as sp
 import statsmodels.stats.multitest as smm
 from tqdm import tqdm
 
-# Ensure project root (DE-ZILN) is on sys.path so local modules resolve
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
-from utils import get_LN_lfcs as get_DELN_lfcs
+# Run from reproducibility/ as `python -m lymphnode.ln_de_vs_rest`, which puts that
+# directory on sys.path -- no path manipulation needed.
+from utils_frozen import get_LN_lfcs as get_DELN_lfcs
 
 
 def compute_fraction_expressed(counts):
