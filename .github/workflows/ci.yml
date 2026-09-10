@@ -1,0 +1,82 @@
+name: ci
+
+# The test matrix and the floor check, on every push and pull request.
+#
+# release.yml calls this workflow rather than repeating it. That is the point:
+# a matrix defined twice drifts, and the version it stops testing is exactly the
+# one that breaks.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:      # release.yml gates publishing on these same jobs
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: tests (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The test extra pulls anndata and scanpy, whose own floors are 3.11
+        # and 3.10. The package's claimed floor is checked separately below.
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[test]"
+      - run: python -m pytest -q
+
+  floor:
+    name: the claimed requires-python floor actually imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read requires-python
+        id: floor
+        run: |
+          v=$(python - <<'PY'
+          import re, pathlib
+          spec = re.search(r'requires-python\s*=\s*"([^"]+)"',
+                           pathlib.Path("pyproject.toml").read_text()).group(1)
+          print(re.search(r"(\d+\.\d+)", spec).group(1))
+          PY
+          )
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "floor is $v"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ steps.floor.outputs.version }}
+
+      # Install WITHOUT the test extra: a user on the floor version gets the
+      # package and its runtime dependencies only.
+      #
+      # This job exists because the floor was wrong once. pyproject claimed
+      # >=3.9 while a signature used `bool | None`, which is PEP 604 and
+      # evaluates at definition time -- so the package was unimportable on the
+      # version it advertised. The floor is now >=3.10, which is what the syntax
+      # actually needs; this job is what keeps the two in step.
+      - name: Install the package alone and use it
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python - <<'PY'
+          import numpy as np
+          from lntest import get_LN_lfcs, rank_genes_groups_ln, __version__
+          rng = np.random.default_rng(0)
+          Y = rng.poisson(5, size=(40, 6)).astype(float)
+          X = rng.poisson(5, size=(40, 6)).astype(float)
+          lfc, p = get_LN_lfcs(Y, X)
+          assert np.all(np.isfinite(lfc)) and np.all(np.isfinite(p))
+          print("imports and computes on the claimed floor:", __version__)
+          PY
+
