@@ -1,4 +1,16 @@
-# Releasing `lntest`
+# Releasing `ln-ttest`
+
+**Two names, on purpose.** The PyPI distribution is `ln-ttest`; the import is
+`lntest`, and so is the GitHub repository. PyPI refused `lntest` as "too similar
+to an existing project" — `intest` exists, and PyPI treats `l`, `i` and `1` as
+confusable to block typosquatting. So `pip install ln-ttest` gives you
+`from lntest import ...`, the way scikit-learn imports as sklearn.
+
+Where each one belongs: the *distribution* name appears in `pyproject.toml`'s
+`[project] name`, in `importlib.metadata.version(...)` inside `__init__.py`, in
+the publish environment URL, and in the publisher table below. Everywhere else —
+the wheel-contents guard, the floor job's import — is the *import* name and must
+stay `lntest`.
 
 `release.yml` publishes to PyPI when a version tag is pushed:
 
@@ -19,7 +31,7 @@ this repository. Nothing works until a *pending publisher* is registered.
 
    | Field | Value |
    |---|---|
-   | PyPI project name | `lntest` |
+   | PyPI project name | `ln-ttest` |
    | Owner | `okviman` |
    | Repository name | `lntest` |
    | Workflow name | `release.yml` |

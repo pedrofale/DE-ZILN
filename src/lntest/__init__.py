@@ -33,7 +33,9 @@ def _detect_version() -> str:
     try:  # pragma: no cover - fails only for a tree with no installed metadata
         from importlib.metadata import version
 
-        return version("lntest")
+        # The distribution name, not this module's name. They differ: PyPI
+        # rejected "lntest" as too close to the existing "intest".
+        return version("ln-ttest")
     except Exception:
         return "0.0.0.dev0"
 
