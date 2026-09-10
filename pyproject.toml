@@ -7,7 +7,7 @@ name = "lntest"
 version = "0.1.0"
 description = "LN's t-test: differential expression testing on an asymptotically unbiased log-fold-change estimator"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Oskar Kviman" },
     { name = "Pedro F. Ferreira" },
@@ -36,12 +36,11 @@ dependencies = [
 ]
 
 [project.urls]
-# The shared repository, not the fork this happens to be developed on. Oskar
-# intends to rename it from DE-ZILN to lntest; GitHub keeps a permanent redirect
-# for a renamed repository, so this URL survives the change and should be left
-# alone until the rename actually happens.
-Homepage = "https://github.com/okviman/DE-ZILN"
-Source = "https://github.com/okviman/DE-ZILN"
+# The shared repository, not the fork this happens to be developed on.
+# Renamed from DE-ZILN to lntest on 2026-09-11; the old URL still redirects, but
+# a package's metadata should name the repository as it is.
+Homepage = "https://github.com/okviman/lntest"
+Source = "https://github.com/okviman/lntest"
 
 [project.optional-dependencies]
 # anndata and pandas are needed only to *build* the objects the wrapper is
