@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/okviman/lntest/actions/workflows/ci.yml/badge.svg)](https://github.com/okviman/lntest/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/ln-ttest.svg)](https://pypi.org/project/ln-ttest/)
-[![Python](https://img.shields.io/pypi/pyversions/ln-ttest.svg)](https://pypi.org/project/ln-ttest/)
 
 Differential expression testing on an asymptotically unbiased log-fold-change estimator.
 
