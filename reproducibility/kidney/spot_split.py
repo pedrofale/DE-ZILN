@@ -908,9 +908,15 @@ if __name__ == '__main__':
                         help='Output file for the plot (default: shape_split_test_plot.png)')
     parser.add_argument('--results_file', type=str, default=None,
                         help='Output file for results CSV (default: auto-generated from output name)')
-    parser.add_argument('--input_file', type=str, 
-                        default=str(data_dir(__file__) / 'merged_blobs_in_cluster_5.h5ad'),
-                        help='Input h5ad. Default is kidney/data/, where kidney/preprocess.ipynb writes it.')
+    # NOT merged_blobs_in_cluster_5.h5ad. That is the per-capsule aggregate the two
+    # UMI arms use; its shape_id is an index, not a column, so this script raised
+    # ValueError on it. The README has always said the spot sub-sampling test uses
+    # podocytes_2um.h5ad -- one row per 2um spot. See decision-kidney-preprocess-paths.
+    parser.add_argument('--input_file', type=str,
+                        default=str(data_dir(__file__) / 'podocytes_2um.h5ad'),
+                        help='Input h5ad: one row per 2um spot, with a shape_id column naming the '
+                             'capsule it belongs to. Default is kidney/data/, where '
+                             'kidney/preprocess.ipynb writes it.')
     args = parser.parse_args()
     
     n_shape_ids_remove = args.n_shape_ids_remove
@@ -946,7 +952,8 @@ if __name__ == '__main__':
     # Load spatial ovary data (raw read counts in adata.X)
     h5ad = sc.read_h5ad(require_input(
         input_file,
-        what="the merged glomerular-capsule matrix this arm splits into semi-capsules",
+        what="the per-2um-spot matrix this arm splits into semi-capsules; "
+             "obs needs a shape_id column naming each spot's capsule",
         source="--input-file; not in this repository, but public and rebuildable: "
                "run kidney/preprocess.ipynb top to bottom (downloads 6.5 GB from 10x)",
     ))
