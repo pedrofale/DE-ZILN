@@ -65,19 +65,15 @@ def rank_genes_groups_ln(
         implementation: ``"benjamini-hochberg"`` or ``"bonferroni"``.
 
         The default differs from scanpy's on purpose. scanpy defaults to
-        Benjamini-Hochberg; this wrapper was hardcoded to Bonferroni before the
-        parameter existed, and every published number was produced that way, so
-        changing the default here would silently move results.
-        Was hardcoded to ``"bonferroni"``; exposed so that an arm correcting a
-        different way (the CITE-seq arm uses ``"fdr_bh"``) can call this function
-        rather than reimplementing it. The name and default match scanpy's own
-        ``rank_genes_groups``.
+        Benjamini-Hochberg; this function uses Bonferroni unless told otherwise,
+        because that is what the published results were corrected with and
+        changing the default would silently move them.
     trigamma
         Which trigamma difference the standard error uses -- ``"exact"``
-        (psi_1, the default) or ``"recomb25"`` (the 1/x approximation every
-        published RECOMB number came from). See ``lntest._ln_test``. Exposed so
-        that a reproducibility script can request the published behaviour
-        through this function instead of bypassing it.
+        (psi_1, the default) or ``"recomb25"`` (the 1/x approximation the
+        published RECOMB results used). See :mod:`lntest._ln_test`. Exposed so
+        that code reproducing those numbers can ask for that behaviour through
+        this function rather than bypassing it.
     """
 
     if groupby not in adata.obs:
@@ -132,9 +128,9 @@ def rank_genes_groups_ln(
     pvals_adj = np.recarray((n_store,), dtype=dtype_float)
     # The standard error of the LFC. Stored so that a confidence interval is
     # reachable through this function: lfc +/- 1.96 * lfc_se. That interval is
-    # the method's distinguishing claim -- main_rSEQ's issue B is that scanpy's
-    # LFC estimates fall outside their own CIs while LN's are centred in theirs
-    # -- and until now it could only be had by bypassing this wrapper.
+    # the method's distinguishing claim -- scanpy's LFC estimates can fall
+    # outside their own confidence intervals where LN's are centred in theirs --
+    # so obtaining it should not require bypassing this wrapper.
     lfc_se = np.recarray((n_store,), dtype=dtype_float)
 
     # Main loop

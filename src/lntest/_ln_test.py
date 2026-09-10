@@ -99,20 +99,20 @@ def trigamma_diff_int(
 
 # The two trigamma differences, and why both are here.
 #
-# TRIGAMMA_EXACT is psi_1(a) - psi_1(n), computed above. TRIGAMMA_RECOMB25 is the
-# integral approximation 1/a - 1/n that utils.py used, and it is the one every
-# published RECOMB number came from. They diverge where a is small -- 22% at
-# a = 2, 9.7% at a = 5, 1.1% at a = 50, 0.15% at a = 500 -- which is exactly the
-# sparse regime the method claims an advantage in.
+# TRIGAMMA_EXACT is psi_1(a) - psi_1(n), computed above. TRIGAMMA_RECOMB25 is
+# the integral approximation 1/a - 1/n, and it is the one the published RECOMB
+# results were produced with. They diverge where a is small -- 22% at a = 2,
+# 9.7% at a = 5, 1.1% at a = 50, 0.15% at a = 500 -- which is exactly the sparse
+# regime the method claims an advantage in.
 #
-# Which one is correct is a question for Oskar, open as question 1 in
-# handoff-math-questions. This module does not answer it. It makes the choice
-# explicit and selectable so that a reproducibility script can request the
-# published behaviour by name, instead of the repository carrying two divergent
-# copies of the estimator to get the same effect.
+# Which of the two is correct is an open question about the method, and this
+# module does not answer it. It makes the choice explicit and selectable, so
+# that code reproducing published numbers can ask for that behaviour by name
+# rather than carrying a divergent copy of the estimator.
 #
-# The default is EXACT. Nothing silently reproduces the paper; a caller has to
-# ask for that, and the argument records at the call site that it did.
+# The default is EXACT. Nothing silently reproduces the older behaviour: a
+# caller has to ask for it, and the argument records at the call site that it
+# did.
 
 TRIGAMMA_EXACT = "exact"
 TRIGAMMA_RECOMB25 = "recomb25"
@@ -152,11 +152,9 @@ def log_beta_param_estimates(a, b, trigamma=TRIGAMMA_EXACT):
 
     ``trigamma`` selects psi_1 (the default) or the 1/x approximation. It
     matters here as much as it does in the estimator: at a=5, b=500 the two give
-    0.219339 and 0.198020, and the appendix figure beta_v_ln_visualization_5_500
-    was drawn with the second while its caption states the first. That is
-    question 2 in handoff-math-questions and is not decided here -- the argument
-    exists so the figure can be reproduced as published, and redrawn as
-    captioned, without editing this function.
+    0.219339 and 0.198020. Which is correct is an open question about the
+    method, not settled here; the argument exists so that either can be
+    requested explicitly, without editing this function.
     """
     mu = digamma(a) - digamma(a + b)
     sigma_2 = _trigamma_diff(a, a + b, trigamma)
@@ -245,11 +243,10 @@ def get_LN_lfcs(Y_, X_, normalize=True, test='t', normalization='CP10K',
     """LN's t-test on two count matrices (cells x genes), dense or sparse.
 
     Delegates to :func:`get_LN_lfcs_sparse`, which accepts dense input and
-    converts it. These were two separate implementations of the same algebra
-    until 2026-09-07; the dense one carried float32 intermediates and so
-    disagreed with the sparse one by ~1e-6, enough to fail scanpy's
-    cross-array-type tolerance of 1e-5. They agreed exactly once the dtypes
-    matched, so the duplicate was removed rather than kept in step by hand.
+    converts it, so the dense and sparse paths are one implementation and cannot
+    drift apart. Keeping them separate had cost ~1e-6 of disagreement from
+    float32 intermediates on the dense side -- enough to exceed the 1e-5
+    tolerance scanpy asserts across array types.
     """
     return get_LN_lfcs_sparse(
         Y_,
@@ -275,7 +272,8 @@ except ImportError:
 def _ensure_sparse_positive(A):
     """
     Return CSR sparse matrix containing only strictly positive entries.
-    (Mimics your `A[A <= 0] = np.nan` logic by *dropping* non-positives.)
+    Non-positive entries are dropped rather than masked to NaN; the estimator
+    treats them as absent either way.
     """
     if sp is None:
         raise ImportError("scipy.sparse is required for the sparse implementation.")
@@ -374,7 +372,9 @@ def _pos_mean_var_nnz_per_gene(A):
     s = np.asarray(A_csc.sum(axis=0)).ravel().astype(np.float64)
     ss = np.asarray(A_csc.multiply(A_csc).sum(axis=0)).ravel().astype(np.float64)
 
-    mean = np.ones(A_csc.shape[1], dtype=np.float64)  # keep your "ones to avoid NaNs"
+    # Genes with no positive entries keep a mean of 1.0, so log2 of it is 0 and
+    # the all-zero case contributes nothing rather than a NaN.
+    mean = np.ones(A_csc.shape[1], dtype=np.float64)
     var = np.zeros(A_csc.shape[1], dtype=np.float64)
 
     mask = n_plus > 0
@@ -402,11 +402,11 @@ def get_LN_lfcs_sparse(
     trigamma=TRIGAMMA_EXACT,
 ):
     """
-    Sparse-friendly version of your LN LFC + test.
+    Sparse implementation of the LN log-fold-change estimator and test.
 
     Expects Y_, X_ to be scipy sparse (CSR/CSC) matrices (cells x genes).
-    It treats *zeros and non-positives as absent* (like your NaN masking),
-    and computes moments over strictly-positive entries only.
+    Zeros and non-positives are treated as *absent*, and moments are computed
+    over strictly-positive entries only.
     """
     if sp is None:
         raise ImportError("scipy.sparse is required for sparse Y_/X_.")
@@ -433,7 +433,7 @@ def get_LN_lfcs_sparse(
     n_plus, pos_mean_Y, var_Y, all_zeros_Y = _pos_mean_var_nnz_per_gene(Y)
     n_plus_prime, pos_mean_X, var_X, all_zeros_X = _pos_mean_var_nnz_per_gene(X)
 
-    # \hat{a} (your fallback-to-ones behavior)
+    # \hat{a}, falling back to ones for genes with no positive entries
     a_hat_Y = np.ones(G, dtype=np.float64)
     a_hat_Y[~all_zeros_Y] = n_plus[~all_zeros_Y]
     a_hat_X = np.ones(G, dtype=np.float64)
@@ -445,7 +445,7 @@ def get_LN_lfcs_sparse(
     log2_theta_hat_X = np.log2(a_hat_X / float(n_prime))
 
     # sample mean of positive counts
-    # (pos_mean_* already has 1.0 for all-zeros genes, matching your behavior)
+    # (pos_mean_* is already 1.0 for all-zero genes, so log2 contributes 0)
     log2_m_Y = np.log2(np.maximum(pos_mean_Y, eps))
     log2_m_X = np.log2(np.maximum(pos_mean_X, eps))
 
@@ -477,11 +477,9 @@ def get_LN_lfcs_sparse(
         statistic, p_vals = compute_p_vals(mu_Y, mu_X, se_Y, se_X)
 
     # The three return flags select what comes back after (lfc, p_vals) and are
-    # mutually exclusive. Until 2026-09-10 they were not: return_standard_error
-    # returned first and return_statistic was silently dropped if both were set,
-    # which decision-retire-utils-py records as a defect owing a guard. This is
-    # that guard. It raises rather than picking one, because a caller asking for
-    # two things and getting one is exactly the failure that went unnoticed.
+    # mutually exclusive. Setting more than one raises rather than silently
+    # picking whichever the branch order happens to reach first: a caller that
+    # asks for two quantities and is handed one has no way to notice.
     _asked = [n for n, v in (("return_standard_error", return_standard_error),
                              ("return_statistic", return_statistic),
                              ("return_log_abs_statistic", return_log_abs_statistic)) if v]
