@@ -17,7 +17,7 @@ import pytest
 import scipy.sparse as sp
 from scipy import stats
 
-from lntest.ln_test import get_LN_lfcs, get_LN_lfcs_sparse
+from lntest import get_LN_lfcs, get_LN_lfcs_sparse
 
 ALPHA = 0.05
 

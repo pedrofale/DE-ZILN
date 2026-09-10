@@ -1,8 +1,10 @@
 import numpy as np
 # Migrated to the published package, 2026-09-10. trigamma=TRIGAMMA_RECOMB25
 # keeps the behaviour behind main_rSEQ's fig:sc_confidence_intervals.
-from lntest.ln_test import TRIGAMMA_RECOMB25, get_scanpy_lfcs
-from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
+from lntest import TRIGAMMA_RECOMB25
+from lntest import get_LN_lfcs as get_DELN_lfcs
+# scanpy's LFC formula is a baseline, not part of lntest; see baselines.py.
+from baselines import get_scanpy_lfcs
 import matplotlib.pyplot as plt
 
 """

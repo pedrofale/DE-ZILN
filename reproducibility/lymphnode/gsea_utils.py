@@ -12,8 +12,8 @@ import pandas as pd
 # (lfc, statistic, log_abs, p_vals) -- the arity-and-order mismatch
 # decision-retire-utils-py predicted, so the unpacking is translated, not just
 # repointed. trigamma=TRIGAMMA_RECOMB25 keeps the published behaviour.
-from lntest.ln_test import TRIGAMMA_RECOMB25
-from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
+from lntest import TRIGAMMA_RECOMB25
+from lntest import get_LN_lfcs as get_DELN_lfcs
 
 
 def scanpy_sig_test_with_scores(X, Y, method='t-test', normalization='CP10K', corr_method="bonferroni"):

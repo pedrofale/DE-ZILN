@@ -7,7 +7,7 @@ from sklearn.metrics import confusion_matrix
 # tree reproduces the paper by construction. lntest's own default is the exact
 # psi_1; which one is correct is question 1 in handoff-math-questions, open with
 # Oskar. When it is settled this is a one-word change here, not a migration.
-from lntest.ln_test import TRIGAMMA_RECOMB25, get_LN_lfcs
+from lntest import TRIGAMMA_RECOMB25, get_LN_lfcs
 import matplotlib.pyplot as plt
 from baselines import scanpy_sig_test, get_test_results
 

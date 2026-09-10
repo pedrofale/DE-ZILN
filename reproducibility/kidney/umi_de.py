@@ -19,8 +19,8 @@ from paths import data_dir, require_input
 # tree reproduces the paper by construction. lntest's own default is the exact
 # psi_1; which one is correct is question 1 in handoff-math-questions, open with
 # Oskar. When it is settled this is a one-word change here, not a migration.
-from lntest.ln_test import TRIGAMMA_RECOMB25
-from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
+from lntest import TRIGAMMA_RECOMB25
+from lntest import get_LN_lfcs as get_DELN_lfcs
 from baselines import scanpy_sig_test
 
 

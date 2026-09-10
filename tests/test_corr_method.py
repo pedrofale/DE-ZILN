@@ -29,7 +29,8 @@ import anndata  # noqa: E402
 import pandas as pd  # noqa: E402
 import scanpy as sc  # noqa: E402
 
-from lntest.scanpy_wrapper import CORR_METHODS, _adjust_pvalues  # noqa: E402
+from lntest import CORR_METHODS  # noqa: E402
+from lntest._rank_genes_groups import _adjust_pvalues  # noqa: E402
 
 
 @pytest.fixture(scope="module")

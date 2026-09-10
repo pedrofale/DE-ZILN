@@ -514,48 +514,6 @@ def get_LN_lfcs_sparse(
 
 
 
-def get_seurat_lfcs(X, Y, normalize=True):
-    # Manual calculation of the LFC based on how seurat implements it.
-    # See Log fold-change calculation methods in https://www.biorxiv.org/content/10.1101/2022.05.09.490241v2.full.pdf
-    if normalize:
-        log_X = transform(X)
-    else:
-        log_X = np.log(X + 1)
-    if normalize:
-        log_Y = transform(Y)
-    else:
-        log_Y = np.log(Y + 1)
-
-    return np.log2(np.mean(np.exp(log_Y) - 1, 0) + 1) - np.log2(np.mean(np.exp(log_X) - 1, 0) + 1)
-
-def get_new_seurat_lfcs(X, Y, normalize=True, eps=1e-9):
-    # Manual calculation of the LFC based on how seurat implements it.
-    # See Log fold-change calculation methods in https://www.biorxiv.org/content/10.1101/2022.05.09.490241v2.full.pdf
-    if normalize:
-        log_X = transform(X)
-    else:
-        log_X = np.log(X + 1)
-    if normalize:
-        log_Y = transform(Y)
-    else:
-        log_Y = np.log(Y + 1)
-
-    return np.log2((np.sum(np.exp(log_Y) - 1, 0) + eps) / Y.shape[0]) - np.log2((np.sum(np.exp(log_X) - 1, 0) + eps) / X.shape[0])
-
-
-def get_scanpy_lfcs(X, Y, normalize=True):
-    if normalize:
-        log_X = transform(X)
-    else:
-        log_X = np.log(X + 1)
-    if normalize:
-        log_Y = transform(Y)
-    else:
-        log_Y = np.log(Y + 1)
-
-    return np.log2(np.exp(np.mean(log_Y, 0)) - 1 + 1e-9) - np.log2(np.exp(np.mean(log_X, 0)) - 1 + 1e-9)
-
-
 def transform(z):
     # log(10000 * z / z.sum(over genes for each cell) + 1)
     return np.log((z * 1e4 / z.sum(1, keepdims=True)) + 1)

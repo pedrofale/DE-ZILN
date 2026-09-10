@@ -41,7 +41,7 @@ pytest.importorskip("statsmodels")
 import anndata  # noqa: E402
 import pandas as pd  # noqa: E402
 
-from lntest.ln_test import (  # noqa: E402
+from lntest import (  # noqa: E402
     TRIGAMMA_EXACT,
     TRIGAMMA_RECOMB25,
     get_LN_lfcs,

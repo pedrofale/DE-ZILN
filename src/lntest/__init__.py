@@ -2,15 +2,22 @@
 
     from lntest import get_LN_lfcs, rank_genes_groups_ln
 
-``rank_genes_groups_ln`` is imported eagerly, and can be, because the package
-depends on numpy and scipy alone. It briefly did not: ``scanpy_wrapper`` imported
-statsmodels for one call and pandas for nothing at all, which would have made a
-plain re-export here break ``import lntest`` for anyone without those. That was
-solved by deleting the dependencies rather than by deferring the import.
+This module is the whole public surface. The two implementation modules are
+private, following scanpy, which keeps ``rank_genes_groups`` in
+``scanpy/tools/_rank_genes_groups.py`` and exposes only the name.
+
+``_rank_genes_groups`` was called ``scanpy_wrapper`` until 2026-09-10. The name
+was wrong in both directions: the module never imports scanpy, so it wraps
+nothing, and if scanpy ever dispatches to this package then scanpy is the
+wrapper, not us. It is scanpy-*shaped*, which is what its new name says.
+
+Everything here imports eagerly, and can, because the package depends on numpy,
+scipy and statsmodels alone -- and statsmodels only inside the Benjamini-Hochberg
+branch that needs it, which is again what scanpy does.
 """
 from __future__ import annotations
 
-from .ln_test import (
+from ._ln_test import (
     TRIGAMMA_EXACT,
     TRIGAMMA_RECOMB25,
     get_LN_lfcs,
@@ -18,16 +25,24 @@ from .ln_test import (
     trigamma_diff_int,
     trigamma_diff_recomb25,
 )
-from .scanpy_wrapper import rank_genes_groups_ln
+from ._rank_genes_groups import CORR_METHODS, rank_genes_groups_ln
 
-try:  # pragma: no cover - absent only for a source tree with no installed metadata
-    from importlib.metadata import PackageNotFoundError, version
+def _detect_version() -> str:
+    # Scoped in a function so importlib.metadata's names do not land in the
+    # package namespace; `dir(lntest)` should show the API and nothing else.
+    try:  # pragma: no cover - fails only for a tree with no installed metadata
+        from importlib.metadata import version
 
-    __version__ = version("lntest")
-except (ImportError, PackageNotFoundError):  # pragma: no cover
-    __version__ = "0.0.0.dev0"
+        return version("lntest")
+    except Exception:
+        return "0.0.0.dev0"
+
+
+__version__ = _detect_version()
+del _detect_version
 
 __all__ = [
+    "CORR_METHODS",
     "TRIGAMMA_EXACT",
     "TRIGAMMA_RECOMB25",
     "get_LN_lfcs",
@@ -37,3 +52,7 @@ __all__ = [
     "trigamma_diff_recomb25",
     "__version__",
 ]
+
+
+def __dir__():
+    return sorted(__all__)

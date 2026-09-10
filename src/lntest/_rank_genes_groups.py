@@ -2,7 +2,7 @@ import numpy as np
 from typing import Optional
 import scipy.sparse as sp
 
-from .ln_test import TRIGAMMA_EXACT, get_LN_lfcs, get_LN_lfcs_sparse
+from ._ln_test import TRIGAMMA_EXACT, get_LN_lfcs, get_LN_lfcs_sparse
 
 def _to_dense(a):
     """Convert (possibly sparse) matrix to a dense numpy array."""
@@ -75,7 +75,7 @@ def rank_genes_groups_ln(
     trigamma
         Which trigamma difference the standard error uses -- ``"exact"``
         (psi_1, the default) or ``"recomb25"`` (the 1/x approximation every
-        published RECOMB number came from). See ``lntest.ln_test``. Exposed so
+        published RECOMB number came from). See ``lntest._ln_test``. Exposed so
         that a reproducibility script can request the published behaviour
         through this function instead of bypassing it.
     """

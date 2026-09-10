@@ -381,18 +381,18 @@ def require_lntest():
 
     ``lntest`` itself is the import that must succeed -- the whole point is to
     measure against the *installed* package rather than against ``pkg/`` on a
-    path. Everything downstream is given the ``lntest.ln_test`` submodule
+    path. Everything downstream is given the ``lntest._ln_test`` submodule
     specifically, which keeps the get_DELN_lfcs assertion below meaningful:
     resolved against a package that re-exports names, it could pass for the
     wrong reason.
 
     ``lntest.get_LN_lfcs`` and ``lntest.rank_genes_groups_ln`` do now exist as
-    top-level names (added 2026-09-10); an earlier version of this docstring
-    said they did not, which was true when ``__init__.py`` was empty.
+    top-level names (added 2026-09-10), and since the module rename they are
+    the *only* public route: both implementation modules are private.
     """
     try:
         import lntest
-        import lntest.ln_test as estimator
+        import lntest._ln_test as estimator
     except ImportError as exc:
         raise SystemExit(
             f"FATAL: cannot import lntest ({exc}).\n"

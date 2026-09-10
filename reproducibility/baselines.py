@@ -3,7 +3,13 @@ import pandas as pd
 import scanpy as sc
 import statsmodels.stats.multitest as smm
 from sklearn.metrics import confusion_matrix
-from utils_frozen import get_DELN_lfcs
+# Seurat's and scanpy's own LFC formulas. They used to live in the lntest
+# package, which was the wrong home -- shipping a competitor's estimator inside
+# a package named after ours invites the obvious question, and neither is part
+# of the method. They are re-exported rather than re-implemented: utils_frozen's
+# copies are byte-identical to the ones removed from lntest (checked with an AST
+# comparison), so nothing numerical moves.
+from utils_frozen import get_DELN_lfcs, get_scanpy_lfcs, get_seurat_lfcs  # noqa: F401
 import matplotlib.pyplot as plt
 
 

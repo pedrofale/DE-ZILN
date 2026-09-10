@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 # survive -- the guard is unreachable. With trigamma=TRIGAMMA_RECOMB25 the
 # published behaviour is reproduced to 2.7e-15 in LFC and 1e-14 in p, which is
 # machine precision and closer than the float32 path this arm never used.
-from lntest.ln_test import TRIGAMMA_RECOMB25
-from lntest.ln_test import get_LN_lfcs as get_DELN_lfcs
+from lntest import TRIGAMMA_RECOMB25
+from lntest import get_LN_lfcs as get_DELN_lfcs
 import statsmodels.stats.multitest as smm
 from baselines import get_test_results, scanpy_sig_test
 from tqdm import tqdm
